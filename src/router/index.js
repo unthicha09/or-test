@@ -5,6 +5,7 @@ import CalendarView from '../pages/CalendarView.vue'
 import LoginPages from '../pages/loginPages.vue'
 import ForgotPassword from '../pages/email-ForgotPassword.vue'
 import SignUp from '../pages/signup.vue'
+import BookingView from '../pages/BookingView.vue'
 
 const routes = [
   {
@@ -30,6 +31,12 @@ const routes = [
     path: '/home',
     name: 'home',
     component: HomeView,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/booking',
+    name: 'booking',
+    component: BookingView,
     meta: { requiresAuth: true }
   },
   {

@@ -30,6 +30,7 @@
   </div>
 </template>
 
+
 <script setup>
 import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
@@ -38,7 +39,7 @@ const router = useRouter();
 const license = ref("");
 const password = ref("");
 
-// ถ้า login แล้ว ไม่ต้องอยู่หน้า login
+// ถ้า login อยู่แล้ว ให้เด้งไป home
 onMounted(() => {
   const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
   if (isLoggedIn) {
@@ -46,18 +47,13 @@ onMounted(() => {
   }
 });
 
-// ฟังก์ชันนำทาง
 const goForgot = () => router.push("/forgot-password");
 const goSignup = () => router.push("/signup");
 
-// บังคับให้เป็นตัวเลข และไม่เกิน 5 หลัก
 const handleLicenseInput = () => {
-  license.value = license.value
-    .replace(/\D/g, "")
-    .slice(0, 5);
+  license.value = license.value.replace(/\D/g, "").slice(0, 5);
 };
 
-// 🔐 Login แบบจำลอง (ยังไม่ใช้ฐานข้อมูล)
 const login = () => {
   if (license.value.length !== 5) {
     alert("License ต้องเป็นตัวเลข 5 หลัก");
@@ -69,11 +65,9 @@ const login = () => {
     return;
   }
 
-  // จำลองว่า login สำเร็จ
   localStorage.setItem("isLoggedIn", "true");
-  localStorage.setItem("user_license", license.value);
+  localStorage.setItem("userLicense", license.value); // ✅ แก้ให้ตรงกับ Home
 
-  alert("เข้าสู่ระบบสำเร็จ!");
   router.push("/home");
 };
 </script>

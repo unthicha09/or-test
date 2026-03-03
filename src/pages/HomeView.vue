@@ -207,11 +207,12 @@ const goToCalendar = () => {
 }
 
 const goAddPatient = () => {
-    // router.push('/add-patient')
-    console.log("Navigating to Add Patient page...");
+    isDrawerOpen.value = false
+    router.push('/booking')
 }
 
 const handleLogout = () => {
+    localStorage.removeItem('isLoggedIn')   // ✅ เพิ่มอันนี้
     localStorage.removeItem('userLicense')
     router.push('/login')
 }
