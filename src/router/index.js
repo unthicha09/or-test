@@ -1,66 +1,5 @@
-// import { createRouter, createWebHistory } from "vue-router";
-// import EmailForgotPassword from "../pages/email-ForgotPassword.vue";
-// import NewPassword from "../pages/newpassword.vue";
-
-// const router = createRouter({
-//   history: createWebHistory(),
-//   routes: [
-//     {
-//       path: "/forgot-password",
-//       component: EmailForgotPassword,
-//     },
-//     {
-//       path: "/new-password",
-//       component: NewPassword,
-//     },
-//   ],
-// });
-
-// export default router;
-
-
-
-
-
-
-
-
-// ล่าสุด
-
-// import { createRouter, createWebHistory } from 'vue-router'
-// import HomeView from '../pages/HomeView.vue'
-// import CalendarView from '../pages/CalendarView.vue' // ✅ Import หน้าปฏิทินเข้ามา
-
-// const routes = [
-//   {
-//     path: '/',
-//     name: 'home',
-//     component: HomeView
-//   },
-//   {
-//     path: '/calendar', // ✅ ตั้งชื่อ Path ที่จะใช้เชื่อมไป
-//     name: 'calendar',
-//     component: CalendarView
-//   }
-// ]
-
-// const router = createRouter({
-//   history: createWebHistory(),
-//   routes
-// })
-
-// export default router
-
-
-
-
-
-
-
-
-
-
 import { createRouter, createWebHistory } from 'vue-router'
+
 import HomeView from '../pages/HomeView.vue'
 import CalendarView from '../pages/CalendarView.vue'
 import LoginPages from '../pages/loginPages.vue'
@@ -83,19 +22,21 @@ const routes = [
     component: SignUp
   },
   {
+    path: '/forgot-password',
+    name: 'forgot-password',
+    component: ForgotPassword
+  },
+  {
     path: '/home',
     name: 'home',
-    component: HomeView
+    component: HomeView,
+    meta: { requiresAuth: true }
   },
   {
     path: '/calendar',
     name: 'calendar',
-    component: CalendarView
-  },
-  {
-    path: '/forgot-password',
-    name: 'forgot-password',
-    component: ForgotPassword
+    component: CalendarView,
+    meta: { requiresAuth: true }
   }
 ]
 
@@ -106,12 +47,9 @@ const router = createRouter({
 
 /* 🔐 Navigation Guard */
 router.beforeEach((to, from, next) => {
-  const isLoggedIn = localStorage.getItem('isLoggedIn')
+  const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true'
 
-  // หน้าที่ต้อง login ก่อนเข้า
-  const protectedPages = ['/home', '/calendar']
-
-  if (protectedPages.includes(to.path) && !isLoggedIn) {
+  if (to.meta.requiresAuth && !isLoggedIn) {
     next('/login')
   } else {
     next()
