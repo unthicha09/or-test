@@ -2,10 +2,7 @@
   <div class="page">
     <div class="card">
       <button class="back-btn" @click="goBack">
-        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none"
-          stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="15 18 9 12 15 6" />
-        </svg>
+        ←
       </button>
 
       <div class="content-wrapper">
@@ -48,7 +45,6 @@
 
 <script setup>
 import { ref } from 'vue'
-import axios from 'axios'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
@@ -60,7 +56,7 @@ const day = ref('')
 const message = ref('')
 const isSuccess = ref(false)
 
-const submitForm = async () => {
+const submitForm = () => {
 
   if (!license.value || !password.value || !confirmPassword.value || !day.value) {
     message.value = "กรุณากรอกข้อมูลให้ครบ"
@@ -74,25 +70,14 @@ const submitForm = async () => {
     return
   }
 
-  try {
-    const res = await axios.post('http://127.0.0.1:3000/api/register', {
-      license: license.value,
-      password: password.value,
-      day: day.value
-    })
+  // ✅ จำลองว่าสมัครสำเร็จ (ยังไม่ใช้ backend)
+  message.value = "สมัครสมาชิกสำเร็จ!"
+  isSuccess.value = true
 
-    message.value = res.data.message
-    isSuccess.value = true
-
-    // สมัครสำเร็จ → เด้งไปหน้า login หลัง 1.5 วิ
-    setTimeout(() => {
-      router.push('/login')
-    }, 1500)
-
-  } catch (err) {
-    message.value = err.response?.data || "เกิดข้อผิดพลาด"
-    isSuccess.value = false
-  }
+  // เด้งกลับ login หลัง 1.5 วิ
+  setTimeout(() => {
+    router.push('/login')
+  }, 1500)
 }
 
 const goBack = () => {

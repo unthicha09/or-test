@@ -7,6 +7,7 @@
 
       <input v-model="license" type="text" inputmode="numeric" maxlength="5" placeholder="License" class="input"
         @input="handleLicenseInput" />
+
       <input v-model="password" type="password" placeholder="Password" class="input" />
 
       <div class="links">
@@ -24,7 +25,6 @@
         </span>
       </div>
 
-
       <button class="btn" @click="login">Log in</button>
     </div>
   </div>
@@ -33,7 +33,6 @@
 <script setup>
 import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
-import axios from "axios";
 
 const router = useRouter();
 const license = ref("");
@@ -41,7 +40,7 @@ const password = ref("");
 
 // ถ้า login แล้ว ไม่ต้องอยู่หน้า login
 onMounted(() => {
-  const isLoggedIn = localStorage.getItem("isLoggedIn");
+  const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
   if (isLoggedIn) {
     router.push("/home");
   }
@@ -51,15 +50,15 @@ onMounted(() => {
 const goForgot = () => router.push("/forgot-password");
 const goSignup = () => router.push("/signup");
 
-/* บังคับให้เป็นตัวเลข และไม่เกิน 5 หลัก */
+// บังคับให้เป็นตัวเลข และไม่เกิน 5 หลัก
 const handleLicenseInput = () => {
   license.value = license.value
     .replace(/\D/g, "")
     .slice(0, 5);
 };
 
-/* ฟังก์ชัน Login */
-const login = async () => {
+// 🔐 Login แบบจำลอง (ยังไม่ใช้ฐานข้อมูล)
+const login = () => {
   if (license.value.length !== 5) {
     alert("License ต้องเป็นตัวเลข 5 หลัก");
     return;
@@ -70,33 +69,14 @@ const login = async () => {
     return;
   }
 
-  try {
-    const response = await axios.post("http://localhost:3000/api/login", {
-      license: license.value,
-      password: password.value,
-    });
+  // จำลองว่า login สำเร็จ
+  localStorage.setItem("isLoggedIn", "true");
+  localStorage.setItem("user_license", license.value);
 
-    // ถ้า backend ตอบกลับมาสำเร็จ
-    alert("เข้าสู่ระบบสำเร็จ!");
-
-    // ⭐ เก็บสถานะ login
-    localStorage.setItem("isLoggedIn", "true");
-    localStorage.setItem("user_license", license.value);
-
-    // ไปหน้า Home
-    router.push("/home");
-
-  } catch (error) {
-    if (error.response) {
-      alert(error.response.data);
-    } else {
-      alert("เชื่อมต่อ Server ไม่ได้ (เช็ค node server.js)");
-    }
-  }
+  alert("เข้าสู่ระบบสำเร็จ!");
+  router.push("/home");
 };
 </script>
-
-
 
 
 
