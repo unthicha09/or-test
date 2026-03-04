@@ -1,230 +1,229 @@
 <template>
-    <div class="admin-container">
+    <div class="main-layout">
+        <Transition name="fade">
+            <div v-if="isDrawerOpen || isDayModalOpen || isLogoutModalOpen || isDeleteAccModalOpen"
+                class="drawer-overlay" @click="closeAllOverlays"></div>
+        </Transition>
 
-        <!-- Header -->
-        <!-- ===== HEADER BAR ===== -->
-        <header class="header-bar">
-            <h2 class="logo">Operation Admin</h2>
+        <Transition name="slide">
+            <aside v-if="isDrawerOpen" class="side-drawer">
+                <div class="drawer-header">
+                    <div class="drawer-user-info">
+                        <div class="avatar-circle">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24">
+                                <path fill="white"
+                                    d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10s10-4.48 10-10S17.52 2 12 2m0 4c1.93 0 3.5 1.57 3.5 3.5S13.93 13 12 13s-3.5-1.57-3.5-3.5S10.07 6 12 6m0 14c-2.03 0-4.43-.82-6.14-2.88a9.947 9.947 0 0 1 12.28 0C16.43 19.18 14.03 20 12 20" />
+                            </svg>
+                        </div>
+                        <div class="user-meta">
+                            <span class="drawer-license">{{ userLicense }}</span>
+                            <span class="drawer-day">{{ selectedDay }}</span>
+                        </div>
+                    </div>
+                </div>
+                <nav class="drawer-menu">
+                    <div class="menu-item" @click="goHome">
+                        <span class="material-icons">home</span>
+                        <span class="menu-text">Home</span>
+                    </div>
 
-            <div class="user-menu">
-                <button class="user-btn" @click="toggleMenu">
-                    <!-- User Icon SVG -->
-                    <svg viewBox="0 0 24 24" class="user-icon">
-                        <circle cx="12" cy="12" r="11" fill="#6C8EBF" />
-                        <circle cx="12" cy="9" r="3" fill="white" />
-                        <path d="M6 18c1.5-3 4-4 6-4s4.5 1 6 4" stroke="white" stroke-width="2" fill="none"
-                            stroke-linecap="round" />
-                    </svg>
-                </button>
+                    <div class="menu-item" @click="goToAddPatient">
+                        <span class="material-icons">person_add</span>
+                        <span class="menu-text">Add Patient</span>
+                    </div>
+                </nav>
+            </aside>
+        </Transition>
 
-                <div v-if="showMenu" class="dropdown">
-                    <div class="dropdown-item" @click="logout">
-                        Logout
+        <Transition name="fade">
+            <div v-if="isDayModalOpen" class="modal-overlay-center">
+                <div class="day-modal-card">
+                    <h2 class="day-modal-title">Choose your day</h2>
+                    <div class="days-list">
+                        <div v-for="day in daysOfWeek" :key="day" class="day-option" @click="tempSelectedDay = day">
+                            <span :class="{ 'active-day-text': tempSelectedDay === day }">{{ day }}</span>
+                            <div class="checkbox-box">
+                                <span v-if="tempSelectedDay === day" class="material-icons check-icon">check</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="day-modal-footer">
+                        <button class="btn-confirm-day" @click="confirmDayChange">Confirm</button>
                     </div>
                 </div>
             </div>
-        </header>
+        </Transition>
 
-        <!-- ===== STATUS BOARD ===== -->
-        <section class="section">
-            <h3>Live Operation Status</h3>
-
-            <div class="or-grid">
-                <div class="or-card" v-for="room in operationRooms" :key="room.id">
-                    <h4>{{ room.name }}</h4>
-
-                    <p><strong>Procedure:</strong> {{ room.procedure }}</p>
-                    <p><strong>Doctor:</strong> {{ room.doctor }}</p>
-                    <p><strong>Patient:</strong> {{ room.patient }}</p>
-                    <p><strong>Date:</strong> {{ room.date }}</p>
-
-                    <p>
-                        <strong>Status:</strong>
-                        <span :class="['badge', room.status.toLowerCase()]">
-                            {{ room.status }}
-                        </span>
-                    </p>
+        <Transition name="fade">
+            <div v-if="isLogoutModalOpen" class="modal-overlay-center">
+                <div class="white-modal-card">
+                    <h2 class="modal-msg-title">Are you sure you want to log out?</h2>
+                    <div class="modal-button-group">
+                        <button class="btn-cancel-blue" @click="isLogoutModalOpen = false">Cancel</button>
+                        <button class="btn-confirm-green" @click="handleLogout">Confirm</button>
+                    </div>
                 </div>
             </div>
-        </section>
+        </Transition>
 
-        <section class="section">
-            <h3>Doctor Duty List</h3>
-
-            <table>
-                <thead>
-                    <tr>
-                        <th>Day</th>
-                        <th>License</th>
-                        <th>Doctor</th>
-                        <th>Delete</th>
-                    </tr>
-                </thead>
-
-                <tbody>
-                    <tr v-for="(staff, index) in staffList" :key="staff.id">
-                        <td class="date-cell">
-                            <div class="day">{{ getDayName(staff.date) }}</div>
-                            <div class="date">{{ getShortDate(staff.date) }}</div>
-                        </td>
-                        <td>{{ staff.license }}</td>
-                        <td>{{ staff.name }}</td>
-
-                        <td>
-                            <button @click="removeStaff(index)">🗑</button>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </section>
-
-        <!-- ===== TODAY SCHEDULE ===== -->
-        <!-- ===== TODAY SCHEDULE ===== -->
-        <section class="section">
-            <h3>Today's Schedule</h3>
-
-            <table>
-                <thead>
-                    <tr>
-                        <th>Date</th>
-                        <th>Patient Name</th>
-                        <th>Procedure Type</th>
-                        <th>Doctor</th>
-                        <th>Room</th>
-                        <th>Delete</th>
-                    </tr>
-                </thead>
-
-                <tbody>
-                    <template v-for="(item, index) in schedule" :key="index">
-
-                        <!-- แถวหลัก -->
-                        <tr @click="toggleRow(index)" style="cursor:pointer;">
-                            <td>{{ item.date }}</td>
-                            <td>{{ item.patient }}</td>
-                            <td>{{ item.procedure }}</td>
-                            <td>{{ item.surgeon }}</td>
-                            <td>{{ item.room }}</td>
-
-                            <td>
-                                <button class="delete-btn" @click.stop="deleteCase(index)">
-                                    🗑
-                                </button>
-                            </td>
-                        </tr>
-
-                        <!-- แถวรายละเอียด (จะโผล่เมื่อกด) -->
-                        <tr v-if="expandedRow === index" class="expand-row">
-                            <td colspan="6">
-                                <div class="detail-box">
-                                    <p><strong>HN:</strong> {{ item.hn }}</p>
-                                    <p><strong>Gender:</strong> {{ item.gender }}</p>
-                                    <p><strong>Age:</strong> {{ item.age }}</p>
-                                    <p><strong>Underlying Disease:</strong> {{ item.disease }}</p>
-                                    <p><strong>Drug Allergy:</strong> {{ item.allergy }}</p>
-                                    <p><strong>Blood Type:</strong> {{ item.bloodType }}</p>
-                                    <p><strong>Note:</strong> {{ item.note }}</p>
-                                </div>
-                            </td>
-                        </tr>
-
-                    </template>
-                </tbody>
-
-            </table>
-        </section>
-
-        <!-- ===== ADD QUEUE FORM ===== -->
-        <section class="section form-section">
-            <h3>Add Surgery Queue</h3>
-
-            <form @submit.prevent="addQueue">
-
-                <!-- Patient Information -->
-                <h4 class="sub-title">Patient Information</h4>
-                <div class="form-grid">
-                    <input v-model="newQueue.patient" placeholder="Full Name" required />
-                    <input v-model="newQueue.hn" placeholder="HN Number" required />
-                    <input type="number" v-model="newQueue.age" placeholder="Age" min="0" />
-
-                    <!-- Gender Dropdown -->
-                    <select v-model="newQueue.gender" class="select" required>
-                        <option disabled value="">Select Gender</option>
-                        <option>Male</option>
-                        <option>Female</option>
-                        <option>Other</option>
-                    </select>
+        <Transition name="fade">
+            <div v-if="isDeleteAccModalOpen" class="modal-overlay-center">
+                <div class="white-modal-card">
+                    <div class="warning-icon">⚠️</div>
+                    <h2 class="modal-msg-title red-text">Delete Account?</h2>
+                    <p class="modal-desc">All your surgery data will be permanently removed.</p>
+                    <div class="modal-button-group">
+                        <button class="btn-cancel-gray" @click="isDeleteAccModalOpen = false">Cancel</button>
+                        <button class="btn-confirm-red" @click="handleDeleteAccount">Delete</button>
+                    </div>
                 </div>
+            </div>
+        </Transition>
 
-                <!-- Medical History -->
-                <h4 class="sub-title">Medical History</h4>
-                <div class="form-grid">
-                    <input v-model="newQueue.disease" placeholder="Underlying Disease" />
-                    <input v-model="newQueue.allergy" placeholder="Drug Allergy" />
-
-                    <!-- Blood Type Dropdown -->
-                    <select v-model="newQueue.bloodType" class="select">
-                        <option disabled value="">Select Blood Type</option>
-                        <option>A</option>
-                        <option>B</option>
-                        <option>O</option>
-                        <option>AB</option>
-                        <option>Other</option>
-                    </select>
-
-                    <!-- Show only when Other selected -->
-                    <input v-if="newQueue.bloodType === 'Other'" v-model="newQueue.bloodTypeOther"
-                        placeholder="Specify Blood Type" />
+        <header class="top-nav">
+            <div class="user-group" @click="isDrawerOpen = true">
+                <div class="avatar-circle small">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+                        <path fill="white"
+                            d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10s10-4.48 10-10S17.52 2 12 2m0 4c1.93 0 3.5 1.57 3.5 3.5S13.93 13 12 13s-3.5-1.57-3.5-3.5S10.07 6 12 6m0 14c-2.03 0-4.43-.82-6.14-2.88a9.947 9.947 0 0 1 12.28 0C16.43 19.18 14.03 20 12 20" />
+                    </svg>
                 </div>
+                <span class="license-text">{{ userLicense }}</span>
+            </div>
+            <button class="logout-btn" @click="isLogoutModalOpen = true">
+                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24">
+                    <path fill="white"
+                        d="M5 21q-.825 0-1.412-.587T3 19V5q0-.825.588-1.412T5 3h6q.425 0 .713.288T12 4t-.288.713T11 5H5v14h6q.425 0 .713.288T12 20t-.288.713T11 21zm12.175-8H10q-.425 0-.712-.288T9 12t.288-.712T10 11h7.175L15.3 9.125q-.275-.275-.275-.675t.275-.7.7-.313t.725.288L20.3 11.3q.3.3.3.7t-.3.7l-3.575 3.575q-.3.3-.712.288t-.713-.313q-.275-.3-.262-.712t.287-.688z" />
+                </svg>
+            </button>
+        </header>
 
-                <textarea v-model="newQueue.note" placeholder="Additional Notes" class="textarea"></textarea>
+        <div class="dashboard-container">
+            <h1>Home Page Doctor</h1>
 
-                <!-- Surgery Detail -->
-                <h4 class="sub-title">Surgery Detail</h4>
-                <div class="form-grid">
+            <!-- Today's Schedule -->
+            <section class="section">
 
-                    <!-- Doctor License -->
-                    <input v-model="newQueue.license" placeholder="Doctor License (5 digits)" maxlength="5"
-                        @input="newQueue.license = newQueue.license.replace(/[^0-9]/g, '')" required />
+                <!-- TAB HEADER -->
+                <div class="tab-container">
+                    <button :class="{ active: filter === FILTERS.UPCOMING }" @click="filter = FILTERS.UPCOMING">
+                        Upcoming
+                    </button>
 
-                    <!-- Doctor Name -->
-                    <input v-model="newQueue.surgeon" placeholder="Doctor Name" required />
-
-                    <!-- Operating Room -->
-                    <!-- Operating Room -->
-                    <select v-model="newQueue.room" class="select" required>
-                        <option disabled value="">Select Operating Room</option>
-                        <option>OR-1</option>
-                        <option>OR-2</option>
-                        <option>OR-3</option>
-
-                    </select>
-
-                    <!-- Surgery Date (เพิ่มอันนี้) -->
-                    <input type="date" v-model="newQueue.surgeryDate" required />
-
-                    <!-- Proposed Procedure Dropdown -->
-                    <select v-model="newQueue.procedure" class="select" required>
-                        <option disabled value="">Select Proposed Procedure</option>
-                        <option>LC (120 min)</option>
-                        <option>MRM (90 min)</option>
-                        <option>Thyroidectomy (90 min)</option>
-                        <option>Herniorrhaphy (40 min)</option>
-                        <option>LAR (180 min)</option>
-                    </select>
-
-                </div>
-
-
-                <div class="form-action">
-                    <button type="submit" class="btn-primary">
-                        Add Queue
+                    <button :class="{ active: filter === FILTERS.SUCCEED }" @click="filter = FILTERS.SUCCEED">
+                        Succeed
                     </button>
                 </div>
-            </form>
-        </section>
 
+                <div class="table-wrapper">
+
+                    <!-- UPCOMING TABLE -->
+                    <table v-if="filter === FILTERS.UPCOMING">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Patient</th>
+                                <th>Procedure</th>
+                                <th>Doctor</th>
+                                <th>Room</th>
+                                <th>Succeed</th>
+                                <th>Delete</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            <tr v-for="item in upcomingCases" :key="item.id">
+                                <td>{{ item.date }}</td>
+                                <td>{{ item.patientName }}</td>
+                                <td>{{ item.procedureType }}</td>
+                                <td>{{ item.doctor }}</td>
+                                <td>{{ item.room }}</td>
+                                <td>
+                                    <button class="succeed-btn" @click="markAsSucceed(item.id)">
+                                        Succeed
+                                    </button>
+                                </td>
+                                <td>
+                                    <button class="delete-btn" @click="deleteCase(item.id)">
+                                        Delete
+                                    </button>
+                                </td>
+                            </tr>
+
+                            <tr v-if="upcomingCases.length === 0">
+                                <td colspan="7" style="text-align:center; padding:20px;">
+                                    No upcoming surgery cases
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+
+                    <!-- SUCCEED TABLE -->
+                    <table v-if="filter === FILTERS.SUCCEED">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Patient</th>
+                                <th>Procedure</th>
+                                <th>Doctor</th>
+                                <th>Room</th>
+                                <th>Delete</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            <tr v-for="item in succeedCases" :key="item.id">
+                                <td>{{ item.date }}</td>
+                                <td>{{ item.patientName }}</td>
+                                <td>{{ item.procedureType }}</td>
+                                <td>{{ item.doctor }}</td>
+                                <td>{{ item.room }}</td>
+                                <td>
+                                    <button class="delete-btn" @click="deleteSucceed(item.id)">
+                                        Delete
+                                    </button>
+                                </td>
+                            </tr>
+
+                            <tr v-if="succeedCases.length === 0">
+                                <td colspan="6" style="text-align:center; padding:20px;">
+                                    No completed surgery cases
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                </div>
+
+            </section>
+
+            <div class="info-section">
+                <div class="info-header">
+                    <span class="material-icons info-icon">info</span>
+                    <h3>Additional Information</h3>
+                </div>
+                <ul class="info-list">
+                    <li>
+                        <span class="material-icons check-bullet">check</span>
+                        Cases can be canceled before surgery date.
+                    </li>
+                    <li>
+                        <span class="material-icons check-bullet">check</span>
+                        Please arrive on time for the convenience of everyone.
+                    </li>
+                    <li>
+                        <span class="material-icons check-bullet">check</span>
+                        If there is a problem, please contact staff.
+                    </li>
+                </ul>
+            </div>
+        </div>
     </div>
+    <button class="floating-add-btn" @click="goAddPatient">
+        + Add Patient
+    </button>
+
 </template>
 
 
@@ -237,203 +236,182 @@
 
 
 
-
-
-
-
-
-
 <script setup>
-import { ref } from 'vue'
-const expandedRow = ref(null)
+import { ref, onMounted, computed } from 'vue'
+import { useRouter } from 'vue-router'
 
-const toggleRow = (index) => {
-    expandedRow.value = expandedRow.value === index ? null : index
+const goHome = () => {
+    isDrawerOpen.value = false
 }
 
 
-/* ===== Operation Rooms ===== */
-const operationRooms = ref([
-    {
-        id: 1,
-        name: 'OR-1',
-        procedure: '-',
-        doctor: '-',
-        patient: '-',
-        date: '-',
-        status: 'AVAILABLE'
-    },
-    {
-        id: 2,
-        name: 'OR-2',
-        procedure: '-',
-        doctor: '-',
-        patient: '-',
-        date: '-',
-        status: 'AVAILABLE'
-    },
-    {
-        id: 3,
-        name: 'OR-3',
-        procedure: '-',
-        doctor: '-',
-        patient: '-',
-        date: '-',
-        status: 'AVAILABLE'
+
+
+const expandedId = ref(null)
+
+const toggleDetail = (id) => {
+    expandedId.value = expandedId.value === id ? null : id
+}
+
+const router = useRouter()
+const userLicense = ref('123546')
+
+const FILTERS = {
+    UPCOMING: 'Upcoming',
+    SUCCEED: 'Succeed'
+}
+
+
+const filter = ref(FILTERS.UPCOMING)
+const expandedCaseId = ref(null)
+
+const toggleExpand = (id) => {
+    expandedCaseId.value =
+        expandedCaseId.value === id ? null : id
+}
+
+// 🔥 state เก็บเคส
+const bookings = ref([])
+
+// ================= โหลดข้อมูล =================
+onMounted(() => {
+    const savedLicense = localStorage.getItem('userLicense')
+    if (savedLicense) userLicense.value = savedLicense
+
+    try {
+        const savedBookings = JSON.parse(localStorage.getItem('bookings'))
+        bookings.value = Array.isArray(savedBookings) ? savedBookings : []
+    } catch (error) {
+        bookings.value = []
     }
-])
-const getDayName = (dateString) => {
-    const date = new Date(dateString)
-    return date.toLocaleDateString('en-US', { weekday: 'long' })
-}
-
-const getFormattedDate = (dateString) => {
-    const date = new Date(dateString)
-    const day = String(date.getDate()).padStart(2, '0')
-    const month = String(date.getMonth() + 1).padStart(2, '0')
-    const year = date.getFullYear()
-    return `${day}/${month}/${year}`
-}
-/* ===== Staff ===== */
-const staffList = ref([])
-
-const removeStaff = (index) => {
-    const removed = staffList.value[index]
-
-    // ลบ staff
-    staffList.value.splice(index, 1)
-
-    // ลบข้อมูลในห้องที่หมอคนนี้อยู่
-    operationRooms.value.forEach(room => {
-        if (room.doctor === removed.name) {
-            room.procedure = '-'
-            room.doctor = '-'
-            room.patient = '-'
-            room.date = '-'
-            room.status = 'AVAILABLE'
-        }
-    })
-}
-
-/* ===== Schedule (Today's Schedule) ===== */
-const schedule = ref([])
-
-/* ===== New Queue Form ===== */
-const newQueue = ref({
-    patient: '',
-    hn: '',
-    age: '',
-    gender: '',
-    disease: '',
-    allergy: '',
-    bloodType: '',
-    bloodTypeOther: '',
-    note: '',
-    license: '',
-    surgeon: '',
-    room: '',
-    procedure: '',
-    surgeryDate: '',
-    room: ''
 })
 
-/* ===== Add Queue Function ===== */
-const addQueue = () => {
+// ================= computed =================
 
-    schedule.value.push({
-        date: newQueue.value.surgeryDate,
-        patient: newQueue.value.patient,
-        procedure: newQueue.value.procedure,
-        surgeon: newQueue.value.surgeon,
-        room: newQueue.value.room,
-        hn: newQueue.value.hn,
-        gender: newQueue.value.gender,
-        age: newQueue.value.age,
-        disease: newQueue.value.disease,
-        allergy: newQueue.value.allergy,
-        bloodType: newQueue.value.bloodType === 'Other'
-            ? newQueue.value.bloodTypeOther
-            : newQueue.value.bloodType,
-        note: newQueue.value.note
+// 🔥 เรียงวันที่ใกล้สุดก่อน
+const sortByDate = (arr) => {
+    return [...arr].sort((a, b) => {
+        return new Date(a.date) - new Date(b.date)
     })
+}
 
-    staffList.value.push({
-        id: Date.now(),
-        license: newQueue.value.license,
-        name: newQueue.value.surgeon,
-        date: newQueue.value.surgeryDate
-    })
-
-    const selectedRoom = operationRooms.value.find(
-        room => room.name === newQueue.value.room
+const upcomingCases = computed(() =>
+    sortByDate(
+        bookings.value.filter(item => item.status === FILTERS.UPCOMING)
     )
+)
 
-    if (selectedRoom) {
-        selectedRoom.procedure = newQueue.value.procedure
-        selectedRoom.doctor = newQueue.value.surgeon
-        selectedRoom.patient = newQueue.value.patient
-        selectedRoom.date = newQueue.value.surgeryDate
-        selectedRoom.status = 'UPCOMING'
-    }
-
-    newQueue.value = {
-        patient: '',
-        hn: '',
-        age: '',
-        gender: '',
-        disease: '',
-        allergy: '',
-        bloodType: '',
-        bloodTypeOther: '',
-        note: '',
-        license: '',
-        surgeon: '',
-        room: '',
-        procedure: '',
-        surgeryDate: ''
-    }
-}
-const deleteCase = (index) => {
-    const removedCase = schedule.value[index]
-
-    schedule.value.splice(index, 1)
-
-    staffList.value = staffList.value.filter(
-        staff => !(staff.name === removedCase.surgeon &&
-            staff.date === removedCase.date)
+const succeedCases = computed(() =>
+    sortByDate(
+        bookings.value.filter(item => item.status === FILTERS.SUCCEED)
     )
+)
 
-    const room = operationRooms.value.find(
-        r => r.name === removedCase.room
-    )
+// ================= localStorage =================
+const saveToStorage = () => {
+    localStorage.setItem('bookings', JSON.stringify(bookings.value))
+}
 
-    if (room) {
-        room.procedure = '-'
-        room.doctor = '-'
-        room.patient = '-'
-        room.date = '-'
-        room.status = 'AVAILABLE'
+// ================= actions =================
+
+// 🔥 ลบเคส (มี confirm)
+const deleteCase = (id) => {
+    const confirmDelete = confirm('ยืนยันการลบเคสนี้?')
+    if (!confirmDelete) return
+
+    bookings.value = bookings.value.filter(item => item.id !== id)
+    saveToStorage()
+}
+
+// 🔥 เปลี่ยนสถานะเป็น Succeed แล้วสลับแท็บทันที
+const markAsSucceed = (id) => {
+    const target = bookings.value.find(item => item.id === id)
+
+    if (target) {
+        target.status = FILTERS.SUCCEED
+        saveToStorage()
+
+        // 🔥 สลับไปแท็บ Succeed เลย
+        filter.value = FILTERS.SUCCEED
     }
-
-    expandedRow.value = null
 }
 
-/* ===== Admin Dropdown ===== */
-const showMenu = ref(false)
+// ================= modal / drawer เดิม =================
+const isDrawerOpen = ref(false)
+const isDayModalOpen = ref(false)
+const isLogoutModalOpen = ref(false)
+const isDeleteAccModalOpen = ref(false)
 
-const toggleMenu = () => {
-    showMenu.value = !showMenu.value
+const selectedDay = ref('Monday')
+const tempSelectedDay = ref('Monday')
+const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
+
+const openDayModal = () => {
+    isDrawerOpen.value = false
+    tempSelectedDay.value = selectedDay.value
+    isDayModalOpen.value = true
 }
 
-const logout = () => {
-    alert('Logged out successfully')
+const confirmDayChange = () => {
+    selectedDay.value = tempSelectedDay.value
+    isDayModalOpen.value = false
 }
-const getShortDate = (dateString) => {
-    const date = new Date(dateString)
-    const day = String(date.getDate()).padStart(2, '0')
-    const month = String(date.getMonth() + 1).padStart(2, '0')
-    const year = String(date.getFullYear()).slice(-2)
-    return `${day}/${month}/${year}`
+
+const closeAllOverlays = () => {
+    isDrawerOpen.value = false
+    isDayModalOpen.value = false
+    isLogoutModalOpen.value = false
+    isDeleteAccModalOpen.value = false
+}
+
+const goToCalendar = () => {
+    isDrawerOpen.value = false
+    router.push('/calendar')
+}
+
+const goAddPatient = () => {
+    isDrawerOpen.value = false
+    router.push('/booking')
+}
+
+const handleLogout = () => {
+    localStorage.removeItem('isLoggedIn')
+    localStorage.removeItem('userLicense')
+    router.push('/login')
+}
+
+const handleDeleteAccount = () => {
+    localStorage.clear()
+    router.push('/login')
+}
+
+// ===== Case Detail Modal =====
+const isDetailModalOpen = ref(false)
+const selectedCase = ref(null)
+
+const openCaseDetail = (item) => {
+    selectedCase.value = item
+    isDetailModalOpen.value = true
+}
+
+const closeDetailModal = () => {
+    isDetailModalOpen.value = false
+}
+
+// ==========ลบ===================
+const clearSucceedCases = () => {
+
+    const confirmClear = confirm("Are you sure you want to clear all succeeded cases?")
+    if (!confirmClear) return
+
+    const existing = JSON.parse(localStorage.getItem('bookings')) || []
+
+    // 🔥 ลบเฉพาะ status = Succeed
+    const filtered = existing.filter(item => item.status !== 'Succeed')
+
+    localStorage.setItem('bookings', JSON.stringify(filtered))
+
+    bookings.value = filtered
 }
 </script>
 
@@ -445,415 +423,797 @@ const getShortDate = (dateString) => {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
 <style scoped>
-.header-bar {
+@import url('https://fonts.googleapis.com/icon?family=Material+Icons');
+
+/* --- Layout & Basic --- */
+.main-layout {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background-color: #f5f7fa;
+    /* พื้นหลังเทาอ่อนเพื่อให้การ์ดเด่น */
+}
+
+/* --- สี Navy Blue สำหรับ Top Nav & Drawer --- */
+.top-nav,
+.drawer-header {
+    background-color: #1a3a5f !important;
+    /* Navy Blue */
+    height: 80px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background: #183A74;
-    color: white;
-    padding: 15px 25px;
-    border-radius: 12px;
-    margin-bottom: 20px;
+    padding: 0 20px;
 }
 
-.logo {
-    margin: 0;
+
+/* --- Side Drawer (คงของเดิมแต่เปลี่ยนสี) --- */
+.side-drawer {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 280px;
+    height: 100vh;
+    background-color: #f0f7ff;
+    z-index: 3000;
+    box-shadow: 4px 0 20px rgba(0, 0, 0, 0.1);
 }
 
-.user-menu {
-    position: relative;
-}
-
-.user-btn {
-    background: transparent;
-    border: none;
-    cursor: pointer;
-    padding: 0;
-}
-
-.user-icon {
+.avatar-circle {
     width: 48px;
     height: 48px;
-    transition: 0.2s;
-}
-
-.user-btn:hover .user-icon {
-    transform: scale(1.05);
-}
-
-.dropdown {
-    position: absolute;
-    right: 0;
-    top: 55px;
-    background: white;
-    color: black;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    width: 120px;
-    overflow: hidden;
-}
-
-.dropdown-item {
-    padding: 10px;
-    cursor: pointer;
-}
-
-.dropdown-item:hover {
-    background: #f2f2f2;
-}
-
-/* ===== Layout ===== */
-.admin-container {
-    padding: 40px;
-    background: #f3f6fb;
-    min-height: 100vh;
-    font-family: 'Segoe UI', sans-serif;
-    color: #1f2937;
-}
-
-.topbar {
+    border: 2px solid white;
+    border-radius: 50%;
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
     align-items: center;
-    margin-bottom: 40px;
 }
 
-.topbar h2 {
-    font-weight: 600;
-    color: #0f172a;
+.avatar-circle.small {
+    width: 32px;
+    height: 32px;
+    border-width: 1px;
 }
 
-/* ===== Section ===== */
-.section {
-    margin-bottom: 50px;
-}
-
-.section h3 {
-    margin-bottom: 20px;
-    font-weight: 600;
-    color: #0b2c6b;
-}
-
-/* ===== OR Cards ===== */
-.status-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 25px;
-}
-
-.or-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 20px;
-}
-
-.or-card {
-    background: white;
-    padding: 20px;
-    border-radius: 12px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
-}
-
-.or-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 12px 25px rgba(15, 23, 42, 0.08);
-}
-
-.or-card h4 {
-    margin-bottom: 12px;
-    color: #0b2c6b;
-}
-
-/* ===== Badge ===== */
-.badge {
-    padding: 5px 12px;
-    border-radius: 20px;
-    font-size: 12px;
-    font-weight: 500;
+.drawer-user-info {
+    display: flex;
+    align-items: center;
+    gap: 16px;
     color: white;
 }
 
-.upcoming {
-    background: #f59e0b;
-    /* ส้ม */
-}
-
-.succeed {
-    background: #16a34a;
-    /* เขียว */
-}
-
-/* ===== Table ===== */
-table {
-    width: 100%;
-    border-collapse: collapse;
-    background: white;
-    border-radius: 14px;
-    overflow: hidden;
-    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.05);
-}
-
-thead {
-    background: #0b2c6b;
-    color: white;
-}
-
-th {
-    padding: 14px 18px;
-    text-align: left;
-    font-weight: 500;
-    font-size: 14px;
-}
-
-td {
-    padding: 14px 18px;
-    font-size: 14px;
-}
-
-tbody tr:nth-child(even) {
-    background: #f8fafc;
-}
-
-tbody tr:hover {
-    background: #e2e8f0;
-    transition: 0.2s ease;
-}
-
-/* ===== Form ===== */
-.form-section {
-    background: white;
-    padding: 30px;
-    border-radius: 16px;
-    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.05);
-}
-
-.form-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 15px;
-    margin-bottom: 20px;
-}
-
-.form-grid input {
-    padding: 10px 12px;
-    border: 1px solid #d1d5db;
-    border-radius: 8px;
-    font-size: 14px;
-    transition: 0.2s;
-}
-
-.form-grid input:focus {
-    outline: none;
-    border-color: #0b2c6b;
-    box-shadow: 0 0 0 2px rgba(11, 44, 107, 0.15);
-}
-
-.form-action {
-    margin-top: 20px;
-    text-align: right;
-}
-
-.btn-primary {
-    background-color: #1e3a8a;
-    color: white;
-    padding: 10px 20px;
-    border-radius: 8px;
-    border: none;
-    cursor: pointer;
-    transition: 0.2s ease;
-}
-
-.btn-primary:hover {
-    background-color: #1e40af;
-    transform: translateY(-2px);
-}
-
-.btn-primary {
-    background: #0b2c6b;
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 10px;
-    font-size: 14px;
-    cursor: pointer;
-    transition: 0.2s ease;
-}
-
-.btn-primary:hover {
-    background: #0f3c94;
-}
-
-
-.sub-title {
-    margin: 25px 0 10px;
-    font-weight: 600;
-    color: #0b2c6b;
-}
-
-.textarea {
-    width: 100%;
-    min-height: 90px;
-    padding: 10px;
-    border-radius: 8px;
-    border: 1px solid #d1d5db;
-    margin-top: 10px;
-    resize: vertical;
-}
-
-.select {
-    padding: 10px;
-    border-radius: 8px;
-    border: 1px solid #d1d5db;
-    margin-top: 10px;
-    width: 250px;
-}
-
-.admin-info {
-    position: relative;
-    cursor: pointer;
-    font-weight: 500;
-    color: #0b2c6b;
-}
-
-.admin-dropdown {
-    position: absolute;
-    top: 30px;
-    right: 0;
-    background: white;
-    width: 150px;
-    border-radius: 10px;
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
-    overflow: hidden;
-    z-index: 100;
-}
-
-.dropdown-item {
-    padding: 12px;
-    font-size: 14px;
-    transition: 0.2s;
-}
-
-.dropdown-item:hover {
-    background: #f3f6fb;
-}
-
-.delete-cell {
-    text-align: center;
-}
-
-.delete-btn {
-    background: transparent;
-    border: none;
-    padding: 0;
-    cursor: pointer;
-    font-size: 18px;
-}
-
-.delete-btn:hover {
-    color: red;
-    transform: scale(1.2);
-}
-
-.date-cell .day {
-    font-weight: 600;
-    font-size: 14px;
-    color: #1e3a8a;
-}
-
-.date-cell .date {
-    font-size: 12px;
-    color: #64748b;
-}
-
-.expand-row {
-    background: #f4f6f9;
-}
-
-.outer-box {
-    padding: 25px;
-    background: #eef1f5;
-    border-radius: 12px;
-}
-
-.inner-card {
-    background: #ffffff;
-    border-radius: 14px;
-    padding: 25px 30px;
-    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
-    animation: fadeSlide 0.25s ease;
-}
-
-.card-header {
-    font-size: 18px;
-    font-weight: 600;
-    margin-bottom: 20px;
-    color: #2c3e50;
-    border-bottom: 1px solid #e5e7eb;
-    padding-bottom: 10px;
-}
-
-.card-body {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 15px 40px;
-}
-
-.info-item {
+.user-meta {
     display: flex;
     flex-direction: column;
 }
 
-.info-item.full {
-    grid-column: span 2;
+.drawer-license {
+    font-size: 1.2rem;
+    font-weight: 600;
 }
 
-.label {
+.drawer-day {
+    font-size: 0.85rem;
+    opacity: 0.8;
+}
+
+.drawer-menu {
+    padding: 15px 0;
+}
+
+.menu-item {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 15px 25px;
+    color: #4a6fa5;
+    cursor: pointer;
+}
+
+.menu-item:hover {
+    background-color: #e6effa;
+}
+
+.delete-acc-btn {
+    color: #b80000;
+    margin-top: 0px;
+}
+
+.user-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    color: white;
+}
+
+.logout-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+}
+
+/* --- Main Dashboard Content (UI อัปเดตใหม่) --- */
+.dashboard-container {
+    padding: 20px;
+    flex-grow: 1;
+}
+
+.main-title {
+    text-align: center;
+    color: #1a3a5f;
+    font-size: 1.6rem;
+    font-weight: bold;
+    margin: 30px 0;
+}
+
+.queue-card {
+    width: 90%;
+    max-width: 500px;
+    margin: 0 auto 30px auto;
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+}
+
+.queue-filter {
+    display: flex;
+    padding: 15px;
+    gap: 10px;
+    background: #f8f9fa;
+}
+
+.queue-filter button {
+    flex: 1;
+    padding: 10px 0;
+    border-radius: 10px;
+    border: 1px solid #eee;
+    background: white;
+    color: #444;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.queue-filter button.active {
+    background: #1a3a5f;
+    color: white;
+    border-color: #1a3a5f;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+}
+
+.case-card {
+    background: white;
+    padding: 16px;
+    border-radius: 12px;
+    margin-bottom: 12px;
+    margin-block: 10px;
+    margin-left: 10px;
+    margin-right: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.icon-wrap {
+    width: 70px;
+    height: 70px;
+    background: #f0f2f5;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0 auto 20px auto;
+}
+
+.icon-wrap .material-icons {
+    font-size: 35px;
+    color: #90a4ae;
+}
+
+.empty-state h3 {
+    color: #333;
+    font-size: 1.2rem;
+    margin-bottom: 8px;
+}
+
+.sub-text {
+    color: #888;
+    font-size: 0.9rem;
+    margin-bottom: 30px;
+}
+
+.add-btn {
+    background: #1a3a5f;
+    color: white;
+    border: none;
+    padding: 12px 35px;
+    border-radius: 12px;
+    font-weight: bold;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(26, 58, 95, 0.3);
+    transition: transform 0.2s;
+}
+
+.add-btn:hover {
+    transform: translateY(-2px);
+}
+
+/* --- Info Section อัปเดตใหม่ตามวาด --- */
+.info-section {
+    max-width: 500px;
+    margin: 0 auto 50px auto;
+    background: #eef2f7;
+    padding: 20px;
+    border-radius: 16px;
+}
+
+.info-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 15px;
+    color: #1a3a5f;
+}
+
+
+
+.info-header h3 {
+    font-size: 1.1rem;
+    font-weight: bold;
+    margin: 0;
+}
+
+
+
+.info-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.info-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 12px;
+    color: #4a5e75;
+    font-size: 0.95rem;
+}
+
+.check-bullet {
+    font-size: 18px;
+    color: #1a3a5f;
+    margin-top: 2px;
+}
+
+/* --- Modals & Transitions (ของเดิมทั้งหมด) --- */
+.drawer-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.3);
+    z-index: 2500;
+}
+
+.modal-overlay-center {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 4000;
+    background: rgba(0, 0, 0, 0.4);
+}
+
+.white-modal-card {
+    background: white;
+    width: 90%;
+    max-width: 320px;
+    padding: 30px 20px;
+    border-radius: 24px;
+    text-align: center;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+.day-modal-card {
+    background-color: #e3f2fd;
+    width: 90%;
+    max-width: 340px;
+    padding: 30px;
+    border-radius: 24px;
+}
+
+.day-modal-title {
+    color: #2c4c87;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.day-option {
+    display: flex;
+    justify-content: space-between;
+    padding: 12px;
+    color: #6a92d4;
+    cursor: pointer;
+}
+
+.active-day-text {
+    color: #2c4c87;
+    font-weight: bold;
+}
+
+.checkbox-box {
+    width: 22px;
+    height: 22px;
+    border: 2px solid #2c4c87;
+    border-radius: 4px;
+    background: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.check-icon {
+    color: #2c4c87;
+    font-size: 18px;
+}
+
+.btn-confirm-day {
+    background: #2c4c87;
+    color: white;
+    border: none;
+    padding: 10px 25px;
+    border-radius: 12px;
+    cursor: pointer;
+    float: right;
+    margin-top: 15px;
+}
+
+.modal-msg-title {
+    color: #2c4c87;
+    font-size: 1.1rem;
+    margin-bottom: 25px;
+}
+
+.red-text {
+    color: #d50000;
+    font-weight: bold;
+}
+
+.modal-desc {
+    font-size: 0.85rem;
+    color: #666;
+    margin-top: -15px;
+    margin-bottom: 25px;
+}
+
+.warning-icon {
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+}
+
+.modal-button-group {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+}
+
+.btn-confirm-green {
+    background-color: #03c172;
+    color: white;
+    border: none;
+    padding: 10px 25px;
+    border-radius: 12px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.btn-cancel-blue {
+    background-color: #6a92d4;
+    color: white;
+    border: none;
+    padding: 10px 25px;
+    border-radius: 12px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.btn-confirm-red {
+    background-color: #d50000;
+    color: white;
+    border: none;
+    padding: 10px 25px;
+    border-radius: 12px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.btn-cancel-gray {
+    background-color: #eee;
+    color: #666;
+    border: none;
+    padding: 10px 25px;
+    border-radius: 12px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+/* Transitions */
+.slide-enter-active,
+.slide-leave-active {
+    transition: transform 0.3s ease;
+}
+
+.slide-enter-from,
+.slide-leave-to {
+    transform: translateX(-100%);
+}
+
+.slide-enter-to,
+.slide-leave-from {
+    transform: translateX(0);
+}
+
+.fade-enter-active,
+.fade-leave-active {
+    transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+    opacity: 0;
+}
+
+.top-action {
+    margin-bottom: 16px;
+    text-align: right;
+}
+
+.case-actions {
+    margin-top: 12px;
+    display: flex;
+    gap: 10px;
+}
+
+.btn-success {
+    background: #2e7d32;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.btn-delete {
+    background: #c62828;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+/* ---------- Case Card Professional Style ---------- */
+
+.case-card {
+    background: #ffffff;
+    padding: 20px;
+    border-radius: 16px;
+    margin-bottom: 16px;
+    border: 1px solid #e4e9f0;
+    transition: 0.25s ease;
+    cursor: pointer;
+}
+
+.case-card:hover {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+    transform: translateY(-2px);
+}
+
+.case-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    font-size: 14px;
+    color: #2c3e50;
+}
+
+.grid-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: center;
+}
+
+.grid-row span {
+    display: block;
+}
+
+.grid-row.single {
+    grid-template-columns: 1fr;
+}
+
+/* ทำ label ดูบาลานซ์ */
+.case-grid strong {
+    font-weight: 600;
+    margin-right: 4px;
+}
+
+.top-row {
+    font-weight: 600;
+    margin-bottom: 12px;
+}
+
+.case-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 12px;
+}
+
+/* ---------- Buttons ---------- */
+
+.btn-success {
+    background: #0d47a1;
+    color: white;
+    border: none;
+    padding: 6px 14px;
+    border-radius: 8px;
     font-size: 13px;
-    color: #6b7280;
-    margin-bottom: 4px;
+    cursor: pointer;
 }
 
-.value {
+.btn-success:hover {
+    background: #1565c0;
+}
+
+.btn-delete {
+    background: #b71c1c;
+    color: white;
+    border: none;
+    padding: 6px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.btn-delete:hover {
+    background: #d32f2f;
+}
+
+/* ---------- Floating Add Button ---------- */
+
+
+
+.floating-add-btn:hover {
+    background: #244b7a;
+    transform: translateY(-3px);
+}
+
+/* ---------- Detail Modal ---------- */
+
+.detail-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 5000;
+}
+
+.detail-card {
+    background: white;
+    width: 90%;
+    max-width: 450px;
+    padding: 28px;
+    border-radius: 18px;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
+}
+
+.detail-card h2 {
+    margin-bottom: 20px;
+    color: #1a3a5f;
+}
+
+.detail-grid p {
+    margin-bottom: 10px;
+    font-size: 14px;
+    color: #333;
+}
+
+.close-detail-btn {
+    margin-top: 20px;
+    width: 100%;
+    background: #1a3a5f;
+    color: white;
+    border: none;
+    padding: 10px;
+    border-radius: 10px;
+    cursor: pointer;
+
+
+}
+
+.add-btn-wrapper {
+    display: flex;
+    justify-content: center;
+    /* ตรงกลาง */
+    margin-top: 28px;
+}
+
+.add-btn {
+    background: #1a3a5f;
+    color: white;
+    border: none;
+    padding: 14px 20px;
+    border-radius: 40px;
+    font-weight: 600;
     font-size: 15px;
-    font-weight: 500;
-    color: #111827;
+    cursor: pointer;
+    transition: 0.25s ease;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+    border-radius: 15px;
+    margin-block: 10px;
+
 }
 
-@keyframes fadeSlide {
-    from {
-        opacity: 0;
-        transform: translateY(-6px);
-    }
+.add-btn:hover {
+    background: #244b7a;
+    transform: translateY(-2px);
 
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+}
+
+.case-detail {
+    margin-top: 14px;
+    padding: 14px;
+    background: #f8fafc;
+    border-radius: 10px;
+    border: 1px solid #e3e8ef;
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+.detail-row {
+    margin-bottom: 6px;
+}
+
+/* animation */
+.expand-enter-active,
+.expand-leave-active {
+    transition: all 0.25s ease;
+}
+
+.expand-enter-from,
+.expand-leave-to {
+    opacity: 0;
+    transform: translateY(-6px);
+}
+
+.detail-box {
+    margin-top: 15px;
+    padding: 15px;
+    background: #f5f7fa;
+    border-radius: 10px;
+    font-size: 14px;
+    line-height: 1.6;
+    border: 1px solid #e0e6ed;
+}
+
+
+.clear-wrapper {
+    display: flex;
+    justify-content: flex-end;
+    margin: 10px 0;
+}
+
+.clear-btn {
+    background-color: #ffe500;
+    color: white;
+    border: none;
+    padding: 6px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.clear-btn:hover {
+    background-color: #ffd500;
+}
+
+/* ใหม่*/
+.section {
+    margin: 40px 0;
+}
+
+.section h2 {
+    margin-bottom: 20px;
+    color: #1e3a6d;
+}
+
+.table-wrapper {
+    background: white;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+thead {
+    background: #1e3a6d;
+    color: white;
+}
+
+thead th {
+    padding: 16px;
+    text-align: left;
+}
+
+tbody td {
+    padding: 14px 16px;
+    border-bottom: 1px solid #eee;
 }
 
 .delete-btn {
-    background: #ef4444;
-    border: none;
+    background: #dc2626;
     color: white;
-    padding: 6px 10px;
+    border: none;
+    padding: 6px 14px;
     border-radius: 6px;
     cursor: pointer;
-    transition: 0.2s;
 }
 
 .delete-btn:hover {
-    background: #dc2626;
+    background: #b91c1c;
+}
+
+.succeed-btn {
+    background: #16a34a;
+    color: white;
+    border: none;
+    padding: 6px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.succeed-btn:hover {
+    background: #15803d;
+}
+
+.tab-container {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.tab-container button {
+    flex: 1;
+    padding: 12px;
+    border-radius: 10px;
+    border: none;
+    background: #e5e7eb;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.tab-container button.active {
+    background: #1e3a6d;
+    color: white;
 }
 </style>
