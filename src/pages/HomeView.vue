@@ -883,7 +883,7 @@ const clearSucceedCases = () => {
 /* Transitions */
 .slide-enter-active,
 .slide-leave-active {
-    transition: 0.3s;
+    transition: transform 0.3s ease;
 }
 
 .slide-enter-from,
@@ -891,9 +891,14 @@ const clearSucceedCases = () => {
     transform: translateX(-100%);
 }
 
+.slide-enter-to,
+.slide-leave-from {
+    transform: translateX(0);
+}
+
 .fade-enter-active,
 .fade-leave-active {
-    transition: 0.3s;
+    transition: opacity 0.3s ease;
 }
 
 .fade-enter-from,
@@ -1136,16 +1141,6 @@ const clearSucceedCases = () => {
     border: 1px solid #e0e6ed;
 }
 
-.slide-enter-active,
-.slide-leave-active {
-    transition: all 0.25s ease;
-}
-
-.slide-enter-from,
-.slide-leave-to {
-    opacity: 0;
-    transform: translateY(-8px);
-}
 
 .clear-wrapper {
     display: flex;
