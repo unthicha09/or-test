@@ -106,9 +106,13 @@
 
             <div class="queue-card">
                 <div class="queue-filter">
-                    <button :class="{ active: filter === 'upcoming' }" @click="filter = 'upcoming'">Upcoming</button>
-                    <button :class="{ active: filter === 'past' }" @click="filter = 'past'">Past</button>
-                    <button :class="{ active: filter === 'all' }" @click="filter = 'all'">All</button>
+                    <button :class="{ active: filter === FILTERS.UPCOMING }" @click="filter = FILTERS.UPCOMING">
+                        Upcoming
+                    </button>
+
+                    <button :class="{ active: filter === FILTERS.SUCCEED }" @click="filter = FILTERS.SUCCEED">
+                        Succeed
+                    </button>
                 </div>
 
                 <div class="tab-content-wrapper">
@@ -116,20 +120,22 @@
                         <div :key="filter" class="empty-state">
                             <div class="icon-wrap">
                                 <span class="material-icons">
-                                    {{ filter === 'upcoming' ? 'assignment' : (filter === 'past' ? 'history' :
-                                        'view_list') }}
+                                    {{ filter === FILTERS.UPCOMING ? 'assignment' : 'check_circle' }}
                                 </span>
                             </div>
 
                             <h3>
-                                {{ filter === 'upcoming' ? 'No upcoming surgery cases' :
-                                    (filter === 'past' ? 'No past surgery history' : 'No records found') }}
+                                {{ filter === FILTERS.UPCOMING
+                                    ? 'No upcoming surgery cases'
+                                    : 'No completed surgery cases' }}
                             </h3>
 
                             <p class="sub-text">Please ensure all patient records are updated.</p>
 
-                            <button class="add-btn" @click="goAddPatient">
-                                <span class="material-icons">add</span> Add Patient
+                            <button v-if="filter === FILTERS.UPCOMING" class="add-btn" @click="goAddPatient">
+
+                                <span class="material-icons">add</span>
+                                Add Patient
                             </button>
                         </div>
                     </Transition>
@@ -166,7 +172,12 @@ import { useRouter } from 'vue-router'
 
 const router = useRouter()
 const userLicense = ref('123546')
-const filter = ref('upcoming') // เพิ่มตัวแปร filter สำหรับ UI
+const FILTERS = {
+    UPCOMING: 'Upcoming',
+    SUCCEED: 'Succeed'
+}
+
+const filter = ref(FILTERS.UPCOMING)
 
 // State สำหรับเปิด-ปิด Modal ต่างๆ
 const isDrawerOpen = ref(false)
