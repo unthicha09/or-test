@@ -117,7 +117,7 @@
 
                 <div class="tab-content-wrapper">
 
-                    <!-- 🔥 UPCOMING -->
+                    <!-- ================= UPCOMING ================= -->
                     <div v-if="filter === FILTERS.UPCOMING">
 
                         <div v-if="upcomingCases.length === 0" class="empty-state">
@@ -126,26 +126,76 @@
                             </div>
                             <h3>No upcoming surgery cases</h3>
                             <p class="sub-text">Please ensure all patient records are updated.</p>
-
-                            <button class="add-btn" @click="goAddPatient">
-                                <span class="material-icons">add</span>
-                                Add Patient
-                            </button>
                         </div>
 
                         <div v-else>
-                            <div v-for="item in upcomingCases" :key="item.id" class="case-card">
-                                <p><strong>ผ่าวันไหน:</strong> {{ item.date }}</p>
-                                <p><strong>ใครโดนผ่า:</strong> {{ item.patientName }}</p>
-                                <p><strong>ผ่าอะไร:</strong> {{ item.procedure }}</p>
-                                <p><strong>โดยใคร:</strong> {{ item.doctor }}</p>
-                                <p><strong>ห้องไหน:</strong> {{ item.room }}</p>
+                            <div v-for="item in upcomingCases" :key="item.id" class="case-card"
+                                @click="toggleDetail(item.id)">
+
+                                <!-- ข้อมูลย่อ -->
+                                <div class="case-grid">
+
+                                    <div class="grid-row">
+                                        <span><strong>Surgery Date:</strong> {{ item.date }}</span>
+                                        <span><strong>Room:</strong> {{ item.room }}</span>
+                                    </div>
+
+                                    <div class="grid-row">
+                                        <span><strong>Patient:</strong> {{ item.patientName }}</span>
+                                        <span><strong>Procedure:</strong> {{ item.procedure }}</span>
+                                    </div>
+
+                                    <div class="grid-row single">
+                                        <span><strong>Doctor:</strong> {{ item.doctor }}</span>
+                                    </div>
+
+                                </div>
+
+                                <!-- ✅ Detail แค่ก้อนเดียว -->
+                                <transition name="expand">
+                                    <div v-if="expandedId === item.id" class="case-detail">
+
+                                        <div class="detail-row"><strong>HN:</strong> {{ item.hn }}</div>
+                                        <div class="detail-row"><strong>Full Name:</strong> {{ item.fullName }}</div>
+                                        <div class="detail-row"><strong>Age:</strong> {{ item.age }}</div>
+                                        <div>
+                                            <strong>Gender:</strong>
+                                            {{ item.gender === 'male' ? 'ชาย' : 'หญิง' }}
+                                        </div>
+                                        <div class="detail-row"><strong>Underlying Disease(s):</strong> {{
+                                            item.underlying }}</div>
+                                        <div class="detail-row"><strong>Proposed Procedure:</strong> {{ item.procedure
+                                            }}</div>
+                                        <div class="detail-row"><strong>Date:</strong> {{ item.date }}</div>
+                                        <div class="detail-row"><strong>Notes:</strong> {{ item.notes }}</div>
+
+                                    </div>
+                                </transition>
+
+                                <!-- ปุ่ม -->
+                                <div class="case-actions">
+                                    <button class="btn-success" @click.stop="markAsSucceed(item.id)">
+                                        Succeed
+                                    </button>
+
+                                    <button class="btn-delete" @click.stop="deleteCase(item.id)">
+                                        Delete
+                                    </button>
+                                </div>
+
                             </div>
+                        </div>
+
+                        <div class="add-btn-wrapper" :class="{ center: upcomingCases.length === 0 }">
+                            <button class="add-btn" @click="goAddPatient">
+                                + Add Patient
+                            </button>
                         </div>
 
                     </div>
 
-                    <!-- 🔥 SUCCEED -->
+
+                    <!-- ================= SUCCEED ================= -->
                     <div v-if="filter === FILTERS.SUCCEED">
 
                         <div v-if="succeedCases.length === 0" class="empty-state">
@@ -156,15 +206,28 @@
                         </div>
 
                         <div v-else>
-                            <div v-for="item in succeedCases" :key="item.id" class="case-card">
-                                <p><strong>ผ่าวันไหน:</strong> {{ item.date }}</p>
-                                <p><strong>ใครโดนผ่า:</strong> {{ item.patientName }}</p>
-                                <p><strong>ผ่าอะไร:</strong> {{ item.procedure }}</p>
-                                <p><strong>โดยใคร:</strong> {{ item.doctor }}</p>
-                                <p><strong>ห้องไหน:</strong> {{ item.room }}</p>
+                            <div v-for="item in succeedCases" :key="item.id" class="case-card"
+                                @click="openCaseDetail(item)">
+
+                                <div class="case-row top-row">
+                                    <span><strong>Surgery Date:</strong> {{ item.date }}</span>
+                                    <span><strong>Patient:</strong> {{ item.patientName }}</span>
+                                    <span><strong>Room:</strong> {{ item.room }}</span>
+                                </div>
+
+                                <div class="case-row">
+                                    <span><strong>Doctor:</strong> {{ item.doctor }}</span>
+                                    <span><strong>Procedure:</strong> {{ item.procedure }}</span>
+                                </div>
                             </div>
                         </div>
-
+                        <div class="clear-wrapper">
+                            <div class="clear-wrapper" v-if="succeedCases.length > 0">
+                                <button class="clear-btn" @click="clearSucceedCases">
+                                    Clear
+                                </button>
+                            </div>
+                        </div>
                     </div>
 
                 </div>
@@ -192,6 +255,10 @@
             </div>
         </div>
     </div>
+    <button class="floating-add-btn" @click="goAddPatient">
+        + Add Patient
+    </button>
+
 </template>
 
 
@@ -208,6 +275,13 @@
 import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 
+
+const expandedId = ref(null)
+
+const toggleDetail = (id) => {
+    expandedId.value = expandedId.value === id ? null : id
+}
+
 const router = useRouter()
 const userLicense = ref('123546')
 
@@ -216,28 +290,80 @@ const FILTERS = {
     SUCCEED: 'Succeed'
 }
 
-const filter = ref(FILTERS.UPCOMING)
 
-// 🔥 เพิ่ม state เก็บเคส
+const filter = ref(FILTERS.UPCOMING)
+const expandedCaseId = ref(null)
+
+const toggleExpand = (id) => {
+    expandedCaseId.value =
+        expandedCaseId.value === id ? null : id
+}
+
+// 🔥 state เก็บเคส
 const bookings = ref([])
 
-// โหลดข้อมูลตอนเข้า page
+// ================= โหลดข้อมูล =================
 onMounted(() => {
-    const saved = localStorage.getItem('userLicense')
-    if (saved) userLicense.value = saved
+    const savedLicense = localStorage.getItem('userLicense')
+    if (savedLicense) userLicense.value = savedLicense
 
-    bookings.value = JSON.parse(localStorage.getItem('bookings')) || []
+    try {
+        const savedBookings = JSON.parse(localStorage.getItem('bookings'))
+        bookings.value = Array.isArray(savedBookings) ? savedBookings : []
+    } catch (error) {
+        bookings.value = []
+    }
 })
 
-// 🔥 filter upcoming
+// ================= computed =================
+
+// 🔥 เรียงวันที่ใกล้สุดก่อน
+const sortByDate = (arr) => {
+    return [...arr].sort((a, b) => {
+        return new Date(a.date) - new Date(b.date)
+    })
+}
+
 const upcomingCases = computed(() =>
-    bookings.value.filter(item => item.status === 'Upcoming')
+    sortByDate(
+        bookings.value.filter(item => item.status === FILTERS.UPCOMING)
+    )
 )
 
-// 🔥 filter succeed
 const succeedCases = computed(() =>
-    bookings.value.filter(item => item.status === 'Succeed')
+    sortByDate(
+        bookings.value.filter(item => item.status === FILTERS.SUCCEED)
+    )
 )
+
+// ================= localStorage =================
+const saveToStorage = () => {
+    localStorage.setItem('bookings', JSON.stringify(bookings.value))
+}
+
+// ================= actions =================
+
+// 🔥 ลบเคส (มี confirm)
+const deleteCase = (id) => {
+    const confirmDelete = confirm('ยืนยันการลบเคสนี้?')
+    if (!confirmDelete) return
+
+    bookings.value = bookings.value.filter(item => item.id !== id)
+    saveToStorage()
+}
+
+// 🔥 เปลี่ยนสถานะเป็น Succeed แล้วสลับแท็บทันที
+const markAsSucceed = (id) => {
+    const target = bookings.value.find(item => item.id === id)
+
+    if (target) {
+        target.status = FILTERS.SUCCEED
+        saveToStorage()
+
+        // 🔥 สลับไปแท็บ Succeed เลย
+        filter.value = FILTERS.SUCCEED
+    }
+}
 
 // ================= modal / drawer เดิม =================
 const isDrawerOpen = ref(false)
@@ -286,6 +412,35 @@ const handleLogout = () => {
 const handleDeleteAccount = () => {
     localStorage.clear()
     router.push('/login')
+}
+
+// ===== Case Detail Modal =====
+const isDetailModalOpen = ref(false)
+const selectedCase = ref(null)
+
+const openCaseDetail = (item) => {
+    selectedCase.value = item
+    isDetailModalOpen.value = true
+}
+
+const closeDetailModal = () => {
+    isDetailModalOpen.value = false
+}
+
+// ==========ลบ===================
+const clearSucceedCases = () => {
+
+    const confirmClear = confirm("Are you sure you want to clear all succeeded cases?")
+    if (!confirmClear) return
+
+    const existing = JSON.parse(localStorage.getItem('bookings')) || []
+
+    // 🔥 ลบเฉพาะ status = Succeed
+    const filtered = existing.filter(item => item.status !== 'Succeed')
+
+    localStorage.setItem('bookings', JSON.stringify(filtered))
+
+    bookings.value = filtered
 }
 </script>
 
@@ -467,6 +622,9 @@ const handleDeleteAccount = () => {
     padding: 16px;
     border-radius: 12px;
     margin-bottom: 12px;
+    margin-block: 10px;
+    margin-left: 10px;
+    margin-right: 10px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
@@ -741,5 +899,271 @@ const handleDeleteAccount = () => {
 .fade-enter-from,
 .fade-leave-to {
     opacity: 0;
+}
+
+.top-action {
+    margin-bottom: 16px;
+    text-align: right;
+}
+
+.case-actions {
+    margin-top: 12px;
+    display: flex;
+    gap: 10px;
+}
+
+.btn-success {
+    background: #2e7d32;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.btn-delete {
+    background: #c62828;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+/* ---------- Case Card Professional Style ---------- */
+
+.case-card {
+    background: #ffffff;
+    padding: 20px;
+    border-radius: 16px;
+    margin-bottom: 16px;
+    border: 1px solid #e4e9f0;
+    transition: 0.25s ease;
+    cursor: pointer;
+}
+
+.case-card:hover {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+    transform: translateY(-2px);
+}
+
+.case-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    font-size: 14px;
+    color: #2c3e50;
+}
+
+.grid-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: center;
+}
+
+.grid-row span {
+    display: block;
+}
+
+.grid-row.single {
+    grid-template-columns: 1fr;
+}
+
+/* ทำ label ดูบาลานซ์ */
+.case-grid strong {
+    font-weight: 600;
+    margin-right: 4px;
+}
+
+.top-row {
+    font-weight: 600;
+    margin-bottom: 12px;
+}
+
+.case-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 12px;
+}
+
+/* ---------- Buttons ---------- */
+
+.btn-success {
+    background: #0d47a1;
+    color: white;
+    border: none;
+    padding: 6px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.btn-success:hover {
+    background: #1565c0;
+}
+
+.btn-delete {
+    background: #b71c1c;
+    color: white;
+    border: none;
+    padding: 6px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.btn-delete:hover {
+    background: #d32f2f;
+}
+
+/* ---------- Floating Add Button ---------- */
+
+
+
+.floating-add-btn:hover {
+    background: #244b7a;
+    transform: translateY(-3px);
+}
+
+/* ---------- Detail Modal ---------- */
+
+.detail-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 5000;
+}
+
+.detail-card {
+    background: white;
+    width: 90%;
+    max-width: 450px;
+    padding: 28px;
+    border-radius: 18px;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
+}
+
+.detail-card h2 {
+    margin-bottom: 20px;
+    color: #1a3a5f;
+}
+
+.detail-grid p {
+    margin-bottom: 10px;
+    font-size: 14px;
+    color: #333;
+}
+
+.close-detail-btn {
+    margin-top: 20px;
+    width: 100%;
+    background: #1a3a5f;
+    color: white;
+    border: none;
+    padding: 10px;
+    border-radius: 10px;
+    cursor: pointer;
+
+
+}
+
+.add-btn-wrapper {
+    display: flex;
+    justify-content: center;
+    /* ตรงกลาง */
+    margin-top: 28px;
+}
+
+.add-btn {
+    background: #1a3a5f;
+    color: white;
+    border: none;
+    padding: 14px 20px;
+    border-radius: 40px;
+    font-weight: 600;
+    font-size: 15px;
+    cursor: pointer;
+    transition: 0.25s ease;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+    border-radius: 15px;
+    margin-block: 10px;
+
+}
+
+.add-btn:hover {
+    background: #244b7a;
+    transform: translateY(-2px);
+
+}
+
+.case-detail {
+    margin-top: 14px;
+    padding: 14px;
+    background: #f8fafc;
+    border-radius: 10px;
+    border: 1px solid #e3e8ef;
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+.detail-row {
+    margin-bottom: 6px;
+}
+
+/* animation */
+.expand-enter-active,
+.expand-leave-active {
+    transition: all 0.25s ease;
+}
+
+.expand-enter-from,
+.expand-leave-to {
+    opacity: 0;
+    transform: translateY(-6px);
+}
+
+.detail-box {
+    margin-top: 15px;
+    padding: 15px;
+    background: #f5f7fa;
+    border-radius: 10px;
+    font-size: 14px;
+    line-height: 1.6;
+    border: 1px solid #e0e6ed;
+}
+
+.slide-enter-active,
+.slide-leave-active {
+    transition: all 0.25s ease;
+}
+
+.slide-enter-from,
+.slide-leave-to {
+    opacity: 0;
+    transform: translateY(-8px);
+}
+
+.clear-wrapper {
+    display: flex;
+    justify-content: flex-end;
+    margin: 10px 0;
+}
+
+.clear-btn {
+    background-color: #ffe500;
+    color: white;
+    border: none;
+    padding: 6px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.clear-btn:hover {
+    background-color: #ffd500;
 }
 </style>

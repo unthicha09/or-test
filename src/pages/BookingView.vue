@@ -108,13 +108,22 @@ const submitForm = () => {
     // 🔹 สร้างเคสใหม่ตาม format ที่ Home ต้องใช้
     const newCase = {
         id: Date.now(),
+        status: 'Upcoming',
+
+        // 🔹 ข้อมูลการ์ดย่อ
         date: form.date,
         patientName: form.fullName,
-        disease: form.disease,
         procedure: form.procedure,
-        doctor: 'Dr. Smith',      // 🔥 เปลี่ยนเป็น dynamic ทีหลังได้
-        room: 'OR-01',            // 🔥 เปลี่ยนเป็น dynamic ทีหลังได้
-        status: 'Upcoming'
+        doctor: 'Dr. Smith',
+        room: 'OR-01',
+
+        // 🔥 ข้อมูล detail เต็ม
+        hn: form.hn,
+        fullName: form.fullName,
+        age: form.age,
+        gender: form.gender,
+        underlying: form.disease,
+        notes: form.notes
     }
 
     existing.push(newCase)
