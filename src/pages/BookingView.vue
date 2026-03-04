@@ -75,10 +75,50 @@
 </template>
 
 <script setup>
-import { reactive } from 'vue'
+import { reactive, computed } from 'vue'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
+const currentDoctor = {
+    name: 'Dr. Smith',
+    dutyDay: 1 // 1 = Monday
+}
+
+/* 🚫 วันหยุด */
+const holidays = [
+    '2026-01-01',
+    '2026-04-13',
+    '2026-04-14',
+    '2026-04-15',
+    '2026-12-31'
+]
+
+/* 🔁 แปลงเลขวันเป็นชื่อ */
+const dutyDayName = computed(() => {
+    const days = [
+        'Sunday', 'Monday', 'Tuesday',
+        'Wednesday', 'Thursday', 'Friday', 'Saturday'
+    ]
+    return days[currentDoctor.dutyDay]
+})
+
+/* 🔒 ตรวจสอบวัน */
+const validateDate = () => {
+    if (!form.date) return
+
+    const selected = new Date(form.date)
+    const day = selected.getDay()
+
+    if (day !== currentDoctor.dutyDay) {
+        form.date = ''
+        return
+    }
+
+    if (holidays.includes(form.date)) {
+        form.date = ''
+        return
+    }
+}
 
 const form = reactive({
     hn: '',
