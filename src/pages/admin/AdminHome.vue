@@ -87,21 +87,48 @@
                 <thead>
                     <tr>
                         <th>Date</th>
-                        <th>License</th>
-                        <th>Name</th>
-                        <th>Status</th>
+                        <th>Patient Name</th>
+                        <th>Procedure Type</th>
+                        <th>Doctor</th>
                         <th>Room</th>
+                        <th>Delete</th>
                     </tr>
                 </thead>
 
                 <tbody>
-                    <tr v-for="(item, index) in schedule" :key="index">
-                        <td>{{ item.date }}</td>
-                        <td>{{ item.patient }}</td>
-                        <td>{{ item.procedure }}</td>
-                        <td>{{ item.surgeon }}</td>
-                        <td>{{ item.room }}</td>
-                    </tr>
+                    <template v-for="(item, index) in schedule" :key="index">
+
+                        <!-- แถวหลัก -->
+                        <tr @click="toggleRow(index)" style="cursor:pointer;">
+                            <td>{{ item.date }}</td>
+                            <td>{{ item.patient }}</td>
+                            <td>{{ item.procedure }}</td>
+                            <td>{{ item.surgeon }}</td>
+                            <td>{{ item.room }}</td>
+
+                            <td>
+                                <button class="delete-btn" @click.stop="deleteCase(index)">
+                                    🗑
+                                </button>
+                            </td>
+                        </tr>
+
+                        <!-- แถวรายละเอียด (จะโผล่เมื่อกด) -->
+                        <tr v-if="expandedRow === index" class="expand-row">
+                            <td colspan="6">
+                                <div class="detail-box">
+                                    <p><strong>HN:</strong> {{ item.hn }}</p>
+                                    <p><strong>Gender:</strong> {{ item.gender }}</p>
+                                    <p><strong>Age:</strong> {{ item.age }}</p>
+                                    <p><strong>Underlying Disease:</strong> {{ item.disease }}</p>
+                                    <p><strong>Drug Allergy:</strong> {{ item.allergy }}</p>
+                                    <p><strong>Blood Type:</strong> {{ item.bloodType }}</p>
+                                    <p><strong>Note:</strong> {{ item.note }}</p>
+                                </div>
+                            </td>
+                        </tr>
+
+                    </template>
                 </tbody>
 
             </table>
@@ -218,6 +245,12 @@
 
 <script setup>
 import { ref } from 'vue'
+const expandedRow = ref(null)
+
+const toggleRow = (index) => {
+    expandedRow.value = expandedRow.value === index ? null : index
+}
+
 
 /* ===== Operation Rooms ===== */
 const operationRooms = ref([
@@ -262,22 +295,7 @@ const getFormattedDate = (dateString) => {
     return `${day}/${month}/${year}`
 }
 /* ===== Staff ===== */
-const staffList = ref([
-    {
-        id: 1,
-        license: '12345',
-        name: 'Dr. Smith',
-        status: 'Upcoming',
-        date: '2024-03-10'
-    },
-    {
-        id: 2,
-        license: '67890',
-        name: 'Dr. Brown',
-        status: 'Upcoming',
-        date: '2024-03-10'
-    }
-])
+const staffList = ref([])
 
 const removeStaff = (index) => {
     const removed = staffList.value[index]
@@ -322,17 +340,23 @@ const newQueue = ref({
 /* ===== Add Queue Function ===== */
 const addQueue = () => {
 
-
-    // ===== เพิ่มเข้า Today's Schedule =====
     schedule.value.push({
         date: newQueue.value.surgeryDate,
         patient: newQueue.value.patient,
         procedure: newQueue.value.procedure,
         surgeon: newQueue.value.surgeon,
-        room: newQueue.value.room
+        room: newQueue.value.room,
+        hn: newQueue.value.hn,
+        gender: newQueue.value.gender,
+        age: newQueue.value.age,
+        disease: newQueue.value.disease,
+        allergy: newQueue.value.allergy,
+        bloodType: newQueue.value.bloodType === 'Other'
+            ? newQueue.value.bloodTypeOther
+            : newQueue.value.bloodType,
+        note: newQueue.value.note
     })
 
-    // ===== เพิ่มเข้า Medical Staff =====
     staffList.value.push({
         id: Date.now(),
         license: newQueue.value.license,
@@ -340,7 +364,6 @@ const addQueue = () => {
         date: newQueue.value.surgeryDate
     })
 
-    // ===== 🔥 ตรงนี้แหละที่ต้องใส่ (อัปเดต Live Operation Status) =====
     const selectedRoom = operationRooms.value.find(
         room => room.name === newQueue.value.room
     )
@@ -353,7 +376,6 @@ const addQueue = () => {
         selectedRoom.status = 'UPCOMING'
     }
 
-    // ===== reset form =====
     newQueue.value = {
         patient: '',
         hn: '',
@@ -370,6 +392,30 @@ const addQueue = () => {
         procedure: '',
         surgeryDate: ''
     }
+}
+const deleteCase = (index) => {
+    const removedCase = schedule.value[index]
+
+    schedule.value.splice(index, 1)
+
+    staffList.value = staffList.value.filter(
+        staff => !(staff.name === removedCase.surgeon &&
+            staff.date === removedCase.date)
+    )
+
+    const room = operationRooms.value.find(
+        r => r.name === removedCase.room
+    )
+
+    if (room) {
+        room.procedure = '-'
+        room.doctor = '-'
+        room.patient = '-'
+        room.date = '-'
+        room.status = 'AVAILABLE'
+    }
+
+    expandedRow.value = null
 }
 
 /* ===== Admin Dropdown ===== */
@@ -729,5 +775,85 @@ tbody tr:hover {
 .date-cell .date {
     font-size: 12px;
     color: #64748b;
+}
+
+.expand-row {
+    background: #f4f6f9;
+}
+
+.outer-box {
+    padding: 25px;
+    background: #eef1f5;
+    border-radius: 12px;
+}
+
+.inner-card {
+    background: #ffffff;
+    border-radius: 14px;
+    padding: 25px 30px;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+    animation: fadeSlide 0.25s ease;
+}
+
+.card-header {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 20px;
+    color: #2c3e50;
+    border-bottom: 1px solid #e5e7eb;
+    padding-bottom: 10px;
+}
+
+.card-body {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px 40px;
+}
+
+.info-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.info-item.full {
+    grid-column: span 2;
+}
+
+.label {
+    font-size: 13px;
+    color: #6b7280;
+    margin-bottom: 4px;
+}
+
+.value {
+    font-size: 15px;
+    font-weight: 500;
+    color: #111827;
+}
+
+@keyframes fadeSlide {
+    from {
+        opacity: 0;
+        transform: translateY(-6px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.delete-btn {
+    background: #ef4444;
+    border: none;
+    color: white;
+    padding: 6px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.delete-btn:hover {
+    background: #dc2626;
 }
 </style>
