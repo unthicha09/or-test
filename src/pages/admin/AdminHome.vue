@@ -2,25 +2,42 @@
     <div class="admin-container">
 
         <!-- Header -->
-        <div class="admin-info" @click="toggleMenu">
-            Admin
-            <div v-if="showMenu" class="admin-dropdown">
-                <div class="dropdown-item" @click="logout">
-                    Logout
+        <!-- ===== HEADER BAR ===== -->
+        <header class="header-bar">
+            <h2 class="logo">Operation Admin</h2>
+
+            <div class="user-menu">
+                <button class="user-btn" @click="toggleMenu">
+                    <!-- User Icon SVG -->
+                    <svg viewBox="0 0 24 24" class="user-icon">
+                        <circle cx="12" cy="12" r="11" fill="#6C8EBF" />
+                        <circle cx="12" cy="9" r="3" fill="white" />
+                        <path d="M6 18c1.5-3 4-4 6-4s4.5 1 6 4" stroke="white" stroke-width="2" fill="none"
+                            stroke-linecap="round" />
+                    </svg>
+                </button>
+
+                <div v-if="showMenu" class="dropdown">
+                    <div class="dropdown-item" @click="logout">
+                        Logout
+                    </div>
                 </div>
             </div>
-        </div>
+        </header>
 
         <!-- ===== STATUS BOARD ===== -->
         <section class="section">
             <h3>Live Operation Status</h3>
 
-            <div class="status-grid">
+            <div class="or-grid">
                 <div class="or-card" v-for="room in operationRooms" :key="room.id">
                     <h4>{{ room.name }}</h4>
+
                     <p><strong>Procedure:</strong> {{ room.procedure }}</p>
-                    <p><strong>Surgeon:</strong> {{ room.surgeon }}</p>
+                    <p><strong>Doctor:</strong> {{ room.doctor }}</p>
                     <p><strong>Patient:</strong> {{ room.patient }}</p>
+                    <p><strong>Date:</strong> {{ room.date }}</p>
+
                     <p>
                         <strong>Status:</strong>
                         <span :class="['badge', room.status.toLowerCase()]">
@@ -31,46 +48,36 @@
             </div>
         </section>
 
-        <!-- ===== STAFF TABLE ===== -->
         <section class="section">
-            <h3>Medical Staff Overview</h3>
+            <h3>Doctor Duty List</h3>
 
             <table>
                 <thead>
                     <tr>
-                        <th>Date</th>
+                        <th>Day</th>
                         <th>License</th>
-                        <th>Name</th>
-                        <th>Status</th>
+                        <th>Doctor</th>
                         <th>Delete</th>
                     </tr>
                 </thead>
+
                 <tbody>
                     <tr v-for="(staff, index) in staffList" :key="staff.id">
-
                         <td class="date-cell">
                             <div class="day">{{ getDayName(staff.date) }}</div>
-                            <div class="date">{{ getFormattedDate(staff.date) }}</div>
+                            <div class="date">{{ getShortDate(staff.date) }}</div>
                         </td>
-
                         <td>{{ staff.license }}</td>
-
                         <td>{{ staff.name }}</td>
-
-                        <td>
-                            <span :class="['badge', staff.status?.toLowerCase()]">
-                                {{ staff.status }}
-                            </span>
-                        </td>
 
                         <td>
                             <button @click="removeStaff(index)">🗑</button>
                         </td>
-
                     </tr>
                 </tbody>
             </table>
         </section>
+
         <!-- ===== TODAY SCHEDULE ===== -->
         <!-- ===== TODAY SCHEDULE ===== -->
         <section class="section">
@@ -216,27 +223,30 @@ import { ref } from 'vue'
 const operationRooms = ref([
     {
         id: 1,
-        name: 'OR 1',
-        procedure: 'Appendectomy',
-        surgeon: 'Dr. Smith',
-        patient: 'John Doe',
-        status: 'UPCOMING'
+        name: 'OR-1',
+        procedure: '-',
+        doctor: '-',
+        patient: '-',
+        date: '-',
+        status: 'AVAILABLE'
     },
     {
         id: 2,
-        name: 'OR 2',
-        procedure: 'Cardiac Bypass',
-        surgeon: 'Dr. Brown',
-        patient: 'Michael Lee',
-        status: 'UPCOMING'
+        name: 'OR-2',
+        procedure: '-',
+        doctor: '-',
+        patient: '-',
+        date: '-',
+        status: 'AVAILABLE'
     },
     {
         id: 3,
-        name: 'OR 3',
+        name: 'OR-3',
         procedure: '-',
-        surgeon: '-',
+        doctor: '-',
         patient: '-',
-        status: 'SUCCEED'
+        date: '-',
+        status: 'AVAILABLE'
     }
 ])
 const getDayName = (dateString) => {
@@ -270,7 +280,21 @@ const staffList = ref([
 ])
 
 const removeStaff = (index) => {
+    const removed = staffList.value[index]
+
+    // ลบ staff
     staffList.value.splice(index, 1)
+
+    // ลบข้อมูลในห้องที่หมอคนนี้อยู่
+    operationRooms.value.forEach(room => {
+        if (room.doctor === removed.name) {
+            room.procedure = '-'
+            room.doctor = '-'
+            room.patient = '-'
+            room.date = '-'
+            room.status = 'AVAILABLE'
+        }
+    })
 }
 
 /* ===== Schedule (Today's Schedule) ===== */
@@ -298,7 +322,8 @@ const newQueue = ref({
 /* ===== Add Queue Function ===== */
 const addQueue = () => {
 
-    // เพิ่มเข้า Schedule
+
+    // ===== เพิ่มเข้า Today's Schedule =====
     schedule.value.push({
         date: newQueue.value.surgeryDate,
         patient: newQueue.value.patient,
@@ -307,16 +332,28 @@ const addQueue = () => {
         room: newQueue.value.room
     })
 
-    // เพิ่มเข้า Staff Overview
+    // ===== เพิ่มเข้า Medical Staff =====
     staffList.value.push({
         id: Date.now(),
         license: newQueue.value.license,
         name: newQueue.value.surgeon,
-        status: 'Upcoming', // 👈 ต้องมี
         date: newQueue.value.surgeryDate
     })
 
-    // reset form
+    // ===== 🔥 ตรงนี้แหละที่ต้องใส่ (อัปเดต Live Operation Status) =====
+    const selectedRoom = operationRooms.value.find(
+        room => room.name === newQueue.value.room
+    )
+
+    if (selectedRoom) {
+        selectedRoom.procedure = newQueue.value.procedure
+        selectedRoom.doctor = newQueue.value.surgeon
+        selectedRoom.patient = newQueue.value.patient
+        selectedRoom.date = newQueue.value.surgeryDate
+        selectedRoom.status = 'UPCOMING'
+    }
+
+    // ===== reset form =====
     newQueue.value = {
         patient: '',
         hn: '',
@@ -345,6 +382,13 @@ const toggleMenu = () => {
 const logout = () => {
     alert('Logged out successfully')
 }
+const getShortDate = (dateString) => {
+    const date = new Date(dateString)
+    const day = String(date.getDate()).padStart(2, '0')
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const year = String(date.getFullYear()).slice(-2)
+    return `${day}/${month}/${year}`
+}
 </script>
 
 
@@ -367,6 +411,63 @@ const logout = () => {
 
 
 <style scoped>
+.header-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #183A74;
+    color: white;
+    padding: 15px 25px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+}
+
+.logo {
+    margin: 0;
+}
+
+.user-menu {
+    position: relative;
+}
+
+.user-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+}
+
+.user-icon {
+    width: 48px;
+    height: 48px;
+    transition: 0.2s;
+}
+
+.user-btn:hover .user-icon {
+    transform: scale(1.05);
+}
+
+.dropdown {
+    position: absolute;
+    right: 0;
+    top: 55px;
+    background: white;
+    color: black;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    width: 120px;
+    overflow: hidden;
+}
+
+.dropdown-item {
+    padding: 10px;
+    cursor: pointer;
+}
+
+.dropdown-item:hover {
+    background: #f2f2f2;
+}
+
 /* ===== Layout ===== */
 .admin-container {
     padding: 40px;
@@ -406,12 +507,17 @@ const logout = () => {
     gap: 25px;
 }
 
+.or-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+}
+
 .or-card {
     background: white;
-    padding: 25px;
-    border-radius: 16px;
-    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.05);
-    transition: 0.2s ease;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
 }
 
 .or-card:hover {
