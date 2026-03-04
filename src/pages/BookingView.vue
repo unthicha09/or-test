@@ -102,16 +102,29 @@ const submitForm = () => {
         return
     }
 
-    // ✅ ดึงข้อมูลเก่ามาก่อน (ถ้ามี)
+    // 🔹 ดึงข้อมูลเดิม
     const existing = JSON.parse(localStorage.getItem('bookings')) || []
 
-    // ✅ เพิ่มข้อมูลใหม่เข้าไป (เหมือน todo list)
-    existing.push({ ...form, id: Date.now() })
+    // 🔹 สร้างเคสใหม่ตาม format ที่ Home ต้องใช้
+    const newCase = {
+        id: Date.now(),
+        date: form.date,
+        patientName: form.fullName,
+        disease: form.disease,
+        procedure: form.procedure,
+        doctor: 'Dr. Smith',      // 🔥 เปลี่ยนเป็น dynamic ทีหลังได้
+        room: 'OR-01',            // 🔥 เปลี่ยนเป็น dynamic ทีหลังได้
+        status: 'Upcoming'
+    }
 
-    // ✅ เก็บกลับเข้า localStorage
+    existing.push(newCase)
+
     localStorage.setItem('bookings', JSON.stringify(existing))
 
-    // ✅ เด้งไปหน้า Home
+    // 🔹 reset form
+    Object.keys(form).forEach(key => form[key] = '')
+
+    // 🔹 กลับหน้า Home
     router.push('/home')
 }
 </script>

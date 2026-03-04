@@ -116,29 +116,57 @@
                 </div>
 
                 <div class="tab-content-wrapper">
-                    <Transition name="tab-fade" mode="out-in">
-                        <div :key="filter" class="empty-state">
+
+                    <!-- 🔥 UPCOMING -->
+                    <div v-if="filter === FILTERS.UPCOMING">
+
+                        <div v-if="upcomingCases.length === 0" class="empty-state">
                             <div class="icon-wrap">
-                                <span class="material-icons">
-                                    {{ filter === FILTERS.UPCOMING ? 'assignment' : 'check_circle' }}
-                                </span>
+                                <span class="material-icons">assignment</span>
                             </div>
-
-                            <h3>
-                                {{ filter === FILTERS.UPCOMING
-                                    ? 'No upcoming surgery cases'
-                                    : 'No completed surgery cases' }}
-                            </h3>
-
+                            <h3>No upcoming surgery cases</h3>
                             <p class="sub-text">Please ensure all patient records are updated.</p>
 
-                            <button v-if="filter === FILTERS.UPCOMING" class="add-btn" @click="goAddPatient">
-
+                            <button class="add-btn" @click="goAddPatient">
                                 <span class="material-icons">add</span>
                                 Add Patient
                             </button>
                         </div>
-                    </Transition>
+
+                        <div v-else>
+                            <div v-for="item in upcomingCases" :key="item.id" class="case-card">
+                                <p><strong>ผ่าวันไหน:</strong> {{ item.date }}</p>
+                                <p><strong>ใครโดนผ่า:</strong> {{ item.patientName }}</p>
+                                <p><strong>ผ่าอะไร:</strong> {{ item.procedure }}</p>
+                                <p><strong>โดยใคร:</strong> {{ item.doctor }}</p>
+                                <p><strong>ห้องไหน:</strong> {{ item.room }}</p>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- 🔥 SUCCEED -->
+                    <div v-if="filter === FILTERS.SUCCEED">
+
+                        <div v-if="succeedCases.length === 0" class="empty-state">
+                            <div class="icon-wrap">
+                                <span class="material-icons">check_circle</span>
+                            </div>
+                            <h3>No completed surgery cases</h3>
+                        </div>
+
+                        <div v-else>
+                            <div v-for="item in succeedCases" :key="item.id" class="case-card">
+                                <p><strong>ผ่าวันไหน:</strong> {{ item.date }}</p>
+                                <p><strong>ใครโดนผ่า:</strong> {{ item.patientName }}</p>
+                                <p><strong>ผ่าอะไร:</strong> {{ item.procedure }}</p>
+                                <p><strong>โดยใคร:</strong> {{ item.doctor }}</p>
+                                <p><strong>ห้องไหน:</strong> {{ item.room }}</p>
+                            </div>
+                        </div>
+
+                    </div>
+
                 </div>
             </div>
 
@@ -166,12 +194,23 @@
     </div>
 </template>
 
+
+
+
+
+
+
+
+
+
+
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
 const userLicense = ref('123546')
+
 const FILTERS = {
     UPCOMING: 'Upcoming',
     SUCCEED: 'Succeed'
@@ -179,7 +218,28 @@ const FILTERS = {
 
 const filter = ref(FILTERS.UPCOMING)
 
-// State สำหรับเปิด-ปิด Modal ต่างๆ
+// 🔥 เพิ่ม state เก็บเคส
+const bookings = ref([])
+
+// โหลดข้อมูลตอนเข้า page
+onMounted(() => {
+    const saved = localStorage.getItem('userLicense')
+    if (saved) userLicense.value = saved
+
+    bookings.value = JSON.parse(localStorage.getItem('bookings')) || []
+})
+
+// 🔥 filter upcoming
+const upcomingCases = computed(() =>
+    bookings.value.filter(item => item.status === 'Upcoming')
+)
+
+// 🔥 filter succeed
+const succeedCases = computed(() =>
+    bookings.value.filter(item => item.status === 'Succeed')
+)
+
+// ================= modal / drawer เดิม =================
 const isDrawerOpen = ref(false)
 const isDayModalOpen = ref(false)
 const isLogoutModalOpen = ref(false)
@@ -188,11 +248,6 @@ const isDeleteAccModalOpen = ref(false)
 const selectedDay = ref('Monday')
 const tempSelectedDay = ref('Monday')
 const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
-
-onMounted(() => {
-    const saved = localStorage.getItem('userLicense')
-    if (saved) userLicense.value = saved
-})
 
 const openDayModal = () => {
     isDrawerOpen.value = false
@@ -223,7 +278,7 @@ const goAddPatient = () => {
 }
 
 const handleLogout = () => {
-    localStorage.removeItem('isLoggedIn')   // ✅ เพิ่มอันนี้
+    localStorage.removeItem('isLoggedIn')
     localStorage.removeItem('userLicense')
     router.push('/login')
 }
@@ -233,6 +288,14 @@ const handleDeleteAccount = () => {
     router.push('/login')
 }
 </script>
+
+
+
+
+
+
+
+
 
 <style scoped>
 @import url('https://fonts.googleapis.com/icon?family=Material+Icons');
@@ -397,6 +460,14 @@ const handleDeleteAccount = () => {
 .empty-state {
     text-align: center;
     padding: 60px 20px;
+}
+
+.case-card {
+    background: white;
+    padding: 16px;
+    border-radius: 12px;
+    margin-bottom: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
 .icon-wrap {
