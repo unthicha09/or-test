@@ -72,6 +72,7 @@
             </table>
         </section>
         <!-- ===== TODAY SCHEDULE ===== -->
+        <!-- ===== TODAY SCHEDULE ===== -->
         <section class="section">
             <h3>Today's Schedule</h3>
 
@@ -82,16 +83,20 @@
                         <th>License</th>
                         <th>Name</th>
                         <th>Status</th>
-                        <th></th>
+                        <th>Room</th>
                     </tr>
                 </thead>
-                <tr v-for="(item, index) in schedule" :key="index">
-                    <td>{{ item.date }}</td>
-                    <td>{{ item.patient }}</td>
-                    <td>{{ item.procedure }}</td>
-                    <td>{{ item.surgeon }}</td>
-                    <td>{{ item.room }}</td>
-                </tr>
+
+                <tbody>
+                    <tr v-for="(item, index) in schedule" :key="index">
+                        <td>{{ item.date }}</td>
+                        <td>{{ item.patient }}</td>
+                        <td>{{ item.procedure }}</td>
+                        <td>{{ item.surgeon }}</td>
+                        <td>{{ item.room }}</td>
+                    </tr>
+                </tbody>
+
             </table>
         </section>
 
