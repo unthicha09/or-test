@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
+
 // ===== User Pages =====
 import HomeView from '../pages/HomeView.vue'
 import CalendarView from '../pages/CalendarView.vue'
