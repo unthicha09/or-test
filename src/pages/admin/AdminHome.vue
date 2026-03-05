@@ -17,12 +17,12 @@
                         </div>
                         <div class="user-meta">
                             <span class="drawer-license">{{ userLicense }}</span>
-                            <span class="drawer-day">Admin</span>
 
                         </div>
                     </div>
                 </div>
                 <nav class="drawer-menu">
+
                     <div class="menu-item" @click="goHome">
                         <span class="material-icons">home</span>
                         <span class="menu-text">Home</span>
@@ -32,6 +32,7 @@
                         <span class="material-icons">person_add</span>
                         <span class="menu-text">Add Patient</span>
                     </div>
+
                 </nav>
             </aside>
         </Transition>
@@ -114,138 +115,120 @@
                 </div>
 
                 <div class="tab-content-wrapper">
-                    <Transition name="tab-fade" mode="out-in">
-                        <div :key="filter">
 
-                            <!-- Upcoming Table -->
-                            <table v-if="filter === FILTERS.UPCOMING && operationRooms.length > 0" class="case-table">
+                    <!-- ================= UPCOMING ================= -->
+                    <div v-if="filter === FILTERS.UPCOMING">
 
-                                <thead>
-                                    <tr>
-                                        <th>Date</th>
-                                        <th>Patient</th>
-                                        <th>Procedure</th>
-                                        <th>Doctor</th>
-                                        <th>Room</th>
-                                        <th>Succeed</th>
-                                        <th>Delete</th>
-                                    </tr>
-                                </thead>
+                        <div v-if="upcomingCases.length === 0" class="empty-state">
+                            <div class="icon-wrap">
+                                <span class="material-icons">assignment</span>
+                            </div>
+                            <h3>No upcoming surgery cases</h3>
+                            <p class="sub-text">Please ensure all patient records are updated.</p>
+                        </div>
 
-                                <tbody>
-                                    <tr v-for="(room, index) in operationRooms" :key="room.id">
-                                        <td>{{ room.date }}</td>
-                                        <td>{{ room.patient }}</td>
-                                        <td>{{ room.procedure }}</td>
-                                        <td>{{ room.doctor }}</td>
-                                        <td>{{ room.name }}</td>
+                        <div v-else>
+                            <div v-for="item in upcomingCases" :key="item.id" class="case-card"
+                                @click="toggleDetail(item.id)">
 
-                                        <td>
-                                            <button class="success-btn" @click="markSuccess(index)">✓</button>
-                                        </td>
+                                <!-- ข้อมูลย่อ -->
+                                <div class="case-grid">
 
-                                        <td>
-                                            <button class="delete-btn" @click="deleteCase(index)">🗑</button>
-                                        </td>
-                                    </tr>
-                                </tbody>
+                                    <div class="grid-row">
+                                        <span><strong>Surgery Date:</strong> {{ item.date }}</span>
+                                        <span><strong>Room:</strong> {{ item.room }}</span>
+                                    </div>
 
-                            </table>
-                            <!-- Succeed Table -->
-                            <!-- Succeed Table -->
-                            <table v-if="filter === FILTERS.SUCCEED && succeedCases.length > 0" class="case-table">
+                                    <div class="grid-row">
+                                        <span><strong>Patient:</strong> {{ item.patientName }}</span>
+                                        <span><strong>Procedure:</strong> {{ item.procedure }}</span>
+                                    </div>
 
-                                <thead>
-                                    <tr>
-                                        <th>Date</th>
-                                        <th>Patient</th>
-                                        <th>Procedure</th>
-                                        <th>Doctor</th>
-                                        <th>Room</th>
-                                        <th>Delete</th>
-                                    </tr>
-                                </thead>
+                                    <div class="grid-row single">
+                                        <span><strong>Doctor:</strong> {{ item.doctor }}</span>
+                                    </div>
 
-                                <tbody>
-                                    <template v-for="(room, index) in succeedCases" :key="index">
-
-                                        <!-- MAIN ROW -->
-                                        <tr @click="toggleRow(index)" class="clickable-row">
-                                            <td>{{ room.date }}</td>
-                                            <td>{{ room.patient }}</td>
-                                            <td>{{ room.procedure }}</td>
-                                            <td>{{ room.doctor }}</td>
-                                            <td>{{ room.name }}</td>
-
-                                            <td>
-                                                <button class="delete-btn"
-                                                    @click.stop="deleteSuccess(index)">🗑</button>
-                                            </td>
-
-                                        </tr>
-
-                                        <!-- EXPAND DETAIL -->
-                                        <Transition name="expand">
-                                            <tr v-if="expandedRow === index" class="expand-row">
-                                                <td colspan="6">
-                                                    <div class="detail-grid">
-
-                                                        <div><b>HN:</b> {{ room.hn }}</div>
-                                                        <div><b>Patient Name:</b> {{ room.patient }}</div>
-
-                                                        <div><b>Age:</b> {{ room.age }}</div>
-                                                        <div><b>Gender:</b> {{ room.gender }}</div>
-
-                                                        <div><b>Procedure:</b> {{ room.procedure }}</div>
-                                                        <div><b>Surgery Date:</b> {{ room.date }}</div>
-
-                                                        <div><b>Drug Allergy:</b> {{ room.drugAllergy }}</div>
-                                                        <div><b>Underlying Disease:</b> {{ room.disease }}</div>
-
-                                                        <div><b>Doctor:</b> {{ room.doctor }}</div>
-                                                        <div><b>Operating Room:</b> {{ room.name }}</div>
-
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        </Transition>
-
-                                    </template>
-                                </tbody>
-
-                            </table>
-
-                            <!-- Empty State Succeed -->
-                            <div v-if="filter === FILTERS.SUCCEED && succeedCases.length === 0" class="empty-state">
-
-                                <div class="icon-wrap">
-                                    <span class="material-icons">assignment_turned_in</span>
                                 </div>
 
-                                <h3>No completed surgery cases</h3>
+                                <!-- ✅ Detail แค่ก้อนเดียว -->
+                                <transition name="expand">
+                                    <div v-if="expandedId === item.id" class="case-detail">
 
-                                <p class="sub-text">Completed surgery records will appear here.</p>
+                                        <div class="detail-row"><strong>HN:</strong> {{ item.hn }}</div>
+                                        <div class="detail-row"><strong>Full Name:</strong> {{ item.fullName }}</div>
+                                        <div class="detail-row"><strong>Age:</strong> {{ item.age }}</div>
+                                        <div>
+                                            <strong>Gender:</strong>
+                                            {{ item.gender === 'male' ? 'ชาย' : 'หญิง' }}
+                                        </div>
+                                        <div class="detail-row"><strong>Underlying Disease(s):</strong> {{
+                                            item.underlying }}</div>
+                                        <div class="detail-row"><strong>Proposed Procedure:</strong> {{ item.procedure
+                                            }}</div>
+                                        <div class="detail-row"><strong>Date:</strong> {{ item.date }}</div>
+                                        <div class="detail-row"><strong>Notes:</strong> {{ item.notes }}</div>
+
+                                    </div>
+                                </transition>
+
+                                <!-- ปุ่ม -->
+                                <div class="case-actions">
+                                    <button class="btn-success" @click.stop="markAsSucceed(item.id)">
+                                        Succeed
+                                    </button>
+
+                                    <button class="btn-delete" @click.stop="deleteCase(item.id)">
+                                        Delete
+                                    </button>
+                                </div>
 
                             </div>
+                        </div>
 
-                            <!-- Empty State -->
-                            <div v-if="filter === FILTERS.UPCOMING && operationRooms.length === 0" class="empty-state">
-                                <div class="icon-wrap">
-                                    <span class="material-icons">assignment</span>
+                        <div class="add-btn-wrapper" :class="{ center: upcomingCases.length === 0 }">
+                            <button class="add-btn" @click="goAddPatient">
+                                + Add Patient
+                            </button>
+                        </div>
+
+                    </div>
+
+
+                    <!-- ================= SUCCEED ================= -->
+                    <div v-if="filter === FILTERS.SUCCEED">
+
+                        <div v-if="succeedCases.length === 0" class="empty-state">
+                            <div class="icon-wrap">
+                                <span class="material-icons">check_circle</span>
+                            </div>
+                            <h3>No completed surgery cases</h3>
+                        </div>
+
+                        <div v-else>
+                            <div v-for="item in succeedCases" :key="item.id" class="case-card"
+                                @click="openCaseDetail(item)">
+
+                                <div class="case-row top-row">
+                                    <span><strong>Surgery Date:</strong> {{ item.date }}</span>
+                                    <span><strong>Patient:</strong> {{ item.patientName }}</span>
+                                    <span><strong>Room:</strong> {{ item.room }}</span>
                                 </div>
 
-                                <h3>No upcoming surgery cases</h3>
-
-                                <p class="sub-text">Please ensure all patient records are updated.</p>
-
-                                <button class="add-btn" @click="goAddPatient">
-                                    <span class="material-icons">add</span>
-                                    Add Patient
+                                <div class="case-row">
+                                    <span><strong>Doctor:</strong> {{ item.doctor }}</span>
+                                    <span><strong>Procedure:</strong> {{ item.procedure }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="clear-wrapper">
+                            <div class="clear-wrapper" v-if="succeedCases.length > 0">
+                                <button class="clear-btn" @click="clearSucceedCases">
+                                    Clear
                                 </button>
                             </div>
-
                         </div>
-                    </Transition>
+                    </div>
+
                 </div>
             </div>
 
@@ -271,6 +254,10 @@
             </div>
         </div>
     </div>
+    <button class="floating-add-btn" @click="goAddPatient">
+        + Add Patient
+    </button>
+
 </template>
 
 
@@ -283,33 +270,105 @@
 
 
 
-
-
-
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
+const goHome = () => {
+    isDrawerOpen.value = false
+}
+
+
+
+const expandedId = ref(null)
+
+const toggleDetail = (id) => {
+    expandedId.value = expandedId.value === id ? null : id
+}
 
 const router = useRouter()
-
 const userLicense = ref('123546')
 
 const FILTERS = {
     UPCOMING: 'Upcoming',
     SUCCEED: 'Succeed'
 }
-const expandedRow = ref(null)
 
-const toggleRow = (index) => {
-    expandedRow.value = expandedRow.value === index ? null : index
-}
 
 const filter = ref(FILTERS.UPCOMING)
+const expandedCaseId = ref(null)
 
-const operationRooms = ref([])
-const succeedCases = ref([])
+const toggleExpand = (id) => {
+    expandedCaseId.value =
+        expandedCaseId.value === id ? null : id
+}
 
-/* ===== Drawer / Modal ===== */
+// 🔥 state เก็บเคส
+const bookings = ref([])
+
+// ================= โหลดข้อมูล =================
+onMounted(() => {
+    const savedLicense = localStorage.getItem('userLicense')
+    if (savedLicense) userLicense.value = savedLicense
+
+    try {
+        const savedBookings = JSON.parse(localStorage.getItem('bookings'))
+        bookings.value = Array.isArray(savedBookings) ? savedBookings : []
+    } catch (error) {
+        bookings.value = []
+    }
+})
+
+// ================= computed =================
+
+// 🔥 เรียงวันที่ใกล้สุดก่อน
+const sortByDate = (arr) => {
+    return [...arr].sort((a, b) => {
+        return new Date(a.date) - new Date(b.date)
+    })
+}
+
+const upcomingCases = computed(() =>
+    sortByDate(
+        bookings.value.filter(item => item.status === FILTERS.UPCOMING)
+    )
+)
+
+const succeedCases = computed(() =>
+    sortByDate(
+        bookings.value.filter(item => item.status === FILTERS.SUCCEED)
+    )
+)
+
+// ================= localStorage =================
+const saveToStorage = () => {
+    localStorage.setItem('bookings', JSON.stringify(bookings.value))
+}
+
+// ================= actions =================
+
+// 🔥 ลบเคส (มี confirm)
+const deleteCase = (id) => {
+    const confirmDelete = confirm('ยืนยันการลบเคสนี้?')
+    if (!confirmDelete) return
+
+    bookings.value = bookings.value.filter(item => item.id !== id)
+    saveToStorage()
+}
+
+// 🔥 เปลี่ยนสถานะเป็น Succeed แล้วสลับแท็บทันที
+const markAsSucceed = (id) => {
+    const target = bookings.value.find(item => item.id === id)
+
+    if (target) {
+        target.status = FILTERS.SUCCEED
+        saveToStorage()
+
+        // 🔥 สลับไปแท็บ Succeed เลย
+        filter.value = FILTERS.SUCCEED
+    }
+}
+
+// ================= modal / drawer เดิม =================
 const isDrawerOpen = ref(false)
 const isDayModalOpen = ref(false)
 const isLogoutModalOpen = ref(false)
@@ -317,47 +376,7 @@ const isDeleteAccModalOpen = ref(false)
 
 const selectedDay = ref('Monday')
 const tempSelectedDay = ref('Monday')
-
 const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
-
-
-/* ===== Load Data ===== */
-onMounted(() => {
-
-    const savedLicense = localStorage.getItem('userLicense')
-    if (savedLicense) userLicense.value = savedLicense
-
-    const savedCases = localStorage.getItem('operationRooms')
-    if (savedCases) {
-        operationRooms.value = JSON.parse(savedCases)
-    }
-
-    const savedSuccess = localStorage.getItem('succeedCases')
-    if (savedSuccess) {
-        succeedCases.value = JSON.parse(savedSuccess)
-    }
-
-})
-
-
-/* ===== Navigation ===== */
-
-const goHome = () => {
-    router.push('/admin-home')
-}
-
-const goAddPatient = () => {
-    isDrawerOpen.value = false
-    router.push('/admin-add-patient')
-}
-
-const goToCalendar = () => {
-    isDrawerOpen.value = false
-    router.push('/calendar')
-}
-
-
-/* ===== Modal ===== */
 
 const openDayModal = () => {
     isDrawerOpen.value = false
@@ -377,9 +396,15 @@ const closeAllOverlays = () => {
     isDeleteAccModalOpen.value = false
 }
 
+const goToCalendar = () => {
+    isDrawerOpen.value = false
+    router.push('/calendar')
+}
 
-/* ===== Auth ===== */
-
+const goAddPatient = () => {
+    isDrawerOpen.value = false
+    router.push({ name: 'admin-add-patient' })
+}
 const handleLogout = () => {
     localStorage.removeItem('isLoggedIn')
     localStorage.removeItem('userLicense')
@@ -391,38 +416,35 @@ const handleDeleteAccount = () => {
     router.push('/login')
 }
 
+// ===== Case Detail Modal =====
+const isDetailModalOpen = ref(false)
+const selectedCase = ref(null)
 
-/* ===== Case Management ===== */
-
-const markSuccess = (index) => {
-
-    const caseData = operationRooms.value[index]
-
-    operationRooms.value.splice(index, 1)
-
-    succeedCases.value.push(caseData)
-
-    localStorage.setItem('operationRooms', JSON.stringify(operationRooms.value))
-    localStorage.setItem('succeedCases', JSON.stringify(succeedCases.value))
+const openCaseDetail = (item) => {
+    selectedCase.value = item
+    isDetailModalOpen.value = true
 }
 
-const deleteCase = (index) => {
-
-    operationRooms.value.splice(index, 1)
-
-    localStorage.setItem('operationRooms', JSON.stringify(operationRooms.value))
+const closeDetailModal = () => {
+    isDetailModalOpen.value = false
 }
 
-const deleteSuccess = (index) => {
+// ==========ลบ===================
+const clearSucceedCases = () => {
 
-    succeedCases.value.splice(index, 1)
+    const confirmClear = confirm("Are you sure you want to clear all succeeded cases?")
+    if (!confirmClear) return
 
-    localStorage.setItem('succeedCases', JSON.stringify(succeedCases.value))
+    const existing = JSON.parse(localStorage.getItem('bookings')) || []
+
+    // 🔥 ลบเฉพาะ status = Succeed
+    const filtered = existing.filter(item => item.status !== 'Succeed')
+
+    localStorage.setItem('bookings', JSON.stringify(filtered))
+
+    bookings.value = filtered
 }
-
 </script>
-
-
 
 
 
@@ -558,13 +580,13 @@ const deleteSuccess = (index) => {
 }
 
 .queue-card {
-    width: 95%;
-    max-width: 1200px;
-    margin: 0 auto;
+    width: 90%;
+    max-width: 500px;
+    margin: 0 auto 30px auto;
     background: white;
-    border-radius: 18px;
-    padding: 30px;
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+    border-radius: 20px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
 }
 
 .queue-filter {
@@ -593,30 +615,19 @@ const deleteSuccess = (index) => {
 }
 
 .empty-state {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 40px 0;
     text-align: center;
+    padding: 60px 20px;
 }
 
-.case-table {
-    width: 100%;
-    border-collapse: collapse;
-    table-layout: fixed;
-}
-
-.case-table th,
-.case-table td {
-    text-align: center;
-    padding: 12px;
-}
-
-.case-table td {
-    padding: 14px;
-    text-align: center;
-    border-bottom: 1px solid #eee;
+.case-card {
+    background: white;
+    padding: 16px;
+    border-radius: 12px;
+    margin-bottom: 12px;
+    margin-block: 10px;
+    margin-left: 10px;
+    margin-right: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
 .icon-wrap {
@@ -673,7 +684,6 @@ const deleteSuccess = (index) => {
     background: #eef2f7;
     padding: 20px;
     border-radius: 16px;
-    margin-top: 20px;
 }
 
 .info-header {
@@ -875,7 +885,7 @@ const deleteSuccess = (index) => {
 /* Transitions */
 .slide-enter-active,
 .slide-leave-active {
-    transition: 0.3s;
+    transition: transform 0.3s ease;
 }
 
 .slide-enter-from,
@@ -883,9 +893,14 @@ const deleteSuccess = (index) => {
     transform: translateX(-100%);
 }
 
+.slide-enter-to,
+.slide-leave-from {
+    transform: translateX(0);
+}
+
 .fade-enter-active,
 .fade-leave-active {
-    transition: 0.3s;
+    transition: opacity 0.3s ease;
 }
 
 .fade-enter-from,
@@ -893,114 +908,259 @@ const deleteSuccess = (index) => {
     opacity: 0;
 }
 
-.case-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 20px;
+.top-action {
+    margin-bottom: 16px;
+    text-align: right;
 }
 
-.case-table th {
-    background: #1f3b5b;
-    color: white;
-    padding: 12px;
-    text-align: center;
-}
-
-.case-table td {
-    padding: 12px;
-    border-bottom: 1px solid #eee;
-    text-align: center;
-}
-
-.success-btn {
-    background: #22c55e;
-    border: none;
-    color: white;
-    padding: 6px 10px;
-    border-radius: 6px;
-    cursor: pointer;
-}
-
-.delete-btn {
-    background: #ef4444;
-    border: none;
-    color: white;
-    padding: 6px 10px;
-    border-radius: 6px;
-    cursor: pointer;
-}
-
-.clickable-row {
-    cursor: pointer;
-}
-
-.clickable-row:hover {
-    background: #f5f7fb;
-}
-
-.expand-row td {
-    background: #f7f9fc;
-}
-
-.expand-content {
-    padding: 20px;
-}
-
-.detail-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 12px 40px;
-    font-size: 15px;
-}
-
-
-
-.expand-content {
-    padding: 16px;
-    animation: slideDown 0.25s ease;
-}
-
-.detail-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
+.case-actions {
+    margin-top: 12px;
+    display: flex;
     gap: 10px;
 }
 
-@keyframes slideDown {
-    from {
-        opacity: 0;
-        transform: translateY(-5px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+.btn-success {
+    background: #2e7d32;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 8px;
+    cursor: pointer;
 }
 
-.detail-grid {
+.btn-delete {
+    background: #c62828;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+/* ---------- Case Card Professional Style ---------- */
+
+.case-card {
+    background: #ffffff;
+    padding: 20px;
+    border-radius: 16px;
+    margin-bottom: 16px;
+    border: 1px solid #e4e9f0;
+    transition: 0.25s ease;
+    cursor: pointer;
+}
+
+.case-card:hover {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+    transform: translateY(-2px);
+}
+
+.case-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    font-size: 14px;
+    color: #2c3e50;
+}
+
+.grid-row {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 12px 40px;
-    font-size: 15px;
+    align-items: center;
 }
 
+.grid-row span {
+    display: block;
+}
+
+.grid-row.single {
+    grid-template-columns: 1fr;
+}
+
+/* ทำ label ดูบาลานซ์ */
+.case-grid strong {
+    font-weight: 600;
+    margin-right: 4px;
+}
+
+.top-row {
+    font-weight: 600;
+    margin-bottom: 12px;
+}
+
+.case-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 12px;
+}
+
+/* ---------- Buttons ---------- */
+
+.btn-success {
+    background: #0d47a1;
+    color: white;
+    border: none;
+    padding: 6px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.btn-success:hover {
+    background: #1565c0;
+}
+
+.btn-delete {
+    background: #b71c1c;
+    color: white;
+    border: none;
+    padding: 6px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.btn-delete:hover {
+    background: #d32f2f;
+}
+
+/* ---------- Floating Add Button ---------- */
+
+
+
+.floating-add-btn:hover {
+    background: #244b7a;
+    transform: translateY(-3px);
+}
+
+/* ---------- Detail Modal ---------- */
+
+.detail-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 5000;
+}
+
+.detail-card {
+    background: white;
+    width: 90%;
+    max-width: 450px;
+    padding: 28px;
+    border-radius: 18px;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
+}
+
+.detail-card h2 {
+    margin-bottom: 20px;
+    color: #1a3a5f;
+}
+
+.detail-grid p {
+    margin-bottom: 10px;
+    font-size: 14px;
+    color: #333;
+}
+
+.close-detail-btn {
+    margin-top: 20px;
+    width: 100%;
+    background: #1a3a5f;
+    color: white;
+    border: none;
+    padding: 10px;
+    border-radius: 10px;
+    cursor: pointer;
+
+
+}
+
+.add-btn-wrapper {
+    display: flex;
+    justify-content: center;
+    /* ตรงกลาง */
+    margin-top: 28px;
+}
+
+.add-btn {
+    background: #1a3a5f;
+    color: white;
+    border: none;
+    padding: 14px 20px;
+    border-radius: 40px;
+    font-weight: 600;
+    font-size: 15px;
+    cursor: pointer;
+    transition: 0.25s ease;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+    border-radius: 15px;
+    margin-block: 10px;
+
+}
+
+.add-btn:hover {
+    background: #244b7a;
+    transform: translateY(-2px);
+
+}
+
+.case-detail {
+    margin-top: 14px;
+    padding: 14px;
+    background: #f8fafc;
+    border-radius: 10px;
+    border: 1px solid #e3e8ef;
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+.detail-row {
+    margin-bottom: 6px;
+}
+
+/* animation */
 .expand-enter-active,
 .expand-leave-active {
-    transition: all .3s ease;
+    transition: all 0.25s ease;
 }
 
 .expand-enter-from,
 .expand-leave-to {
     opacity: 0;
-    transform: translateY(-10px);
+    transform: translateY(-6px);
 }
 
-.clickable-row {
+.detail-box {
+    margin-top: 15px;
+    padding: 15px;
+    background: #f5f7fa;
+    border-radius: 10px;
+    font-size: 14px;
+    line-height: 1.6;
+    border: 1px solid #e0e6ed;
+}
+
+
+.clear-wrapper {
+    display: flex;
+    justify-content: flex-end;
+    margin: 10px 0;
+}
+
+.clear-btn {
+    background-color: #ffe500;
+    color: white;
+    border: none;
+    padding: 6px 14px;
+    border-radius: 6px;
     cursor: pointer;
+    font-weight: 500;
 }
 
-.expand-row {
-    pointer-events: none;
+.clear-btn:hover {
+    background-color: #ffd500;
 }
 </style>
