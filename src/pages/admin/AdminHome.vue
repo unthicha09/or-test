@@ -244,8 +244,10 @@ import { useRouter } from 'vue-router'
 const goHome = () => {
     isDrawerOpen.value = false
 }
-
-
+const goToAddPatient = () => {
+    isDrawerOpen.value = false
+    router.push({ name: 'admin-add-patient' })
+}
 
 
 const expandedId = ref(null)
