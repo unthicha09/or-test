@@ -175,23 +175,29 @@ const handleSubmit = () => {
     const newCase = {
         id: Date.now(),
         date: form.date,
-        patient: form.fullName,
-        procedure: form.procedure,
+        room: form.room,
+        patientName: form.fullName,
         doctor: form.doctor,
-        name: form.room
+        procedure: form.procedure,
+        hn: form.hn,
+        fullName: form.fullName,
+        age: form.age,
+        gender: form.gender,
+        underlying: form.disease,
+        notes: form.notes,
+        status: 'Upcoming'
     }
 
-    const existingCases = JSON.parse(localStorage.getItem('operationRooms')) || []
+    const existingCases = JSON.parse(localStorage.getItem('bookings')) || []
 
     existingCases.push(newCase)
 
-    localStorage.setItem('operationRooms', JSON.stringify(existingCases))
+    localStorage.setItem('bookings', JSON.stringify(existingCases))
 
     alert("Queue added successfully")
 
     router.push('/admin-home')
 }
-
 </script>
 
 
