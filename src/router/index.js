@@ -12,6 +12,7 @@ import BookingView from '../pages/BookingView.vue'
 import LoginAdmin from '../pages/admin/loginAdmin.vue'
 import AdminHome from '../pages/admin/AdminHome.vue'
 import ChooseDoctorAdmin from '../pages/admin/ChooseDoctorAdmin.vue'
+import AddPatientByAdmin from '../pages/admin/AddPatientByAdmin.vue'
 
 const routes = [
   {
@@ -69,8 +70,14 @@ const routes = [
     path: '/choose-doctor',
     name: 'choose-doctor',
     component: ChooseDoctorAdmin
+  },
+  {
+    path: '/admin-add-patient',
+    name: 'admin-add-patient',
+    component: AddPatientByAdmin
   }
 ]
+
 
 const router = createRouter({
   history: createWebHistory(),
