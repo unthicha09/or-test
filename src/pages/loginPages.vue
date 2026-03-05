@@ -11,7 +11,9 @@
       <input v-model="password" type="password" placeholder="Password" class="input" />
 
       <div class="links">
-        <span>Admin mode</span>
+        <router-link to="/admin-login">
+          Admin mode
+        </router-link>
         <span class="divider">|</span>
 
         <span class="link" @click="goForgot">
@@ -83,24 +85,29 @@ const login = () => {
 .page {
   height: 100dvh;
   width: 100%;
-  overflow: hidden;
 
   display: flex;
   justify-content: center;
-  align-items: flex-start;
+  align-items: center;
+  /* กลางจริง ๆ */
 
-  padding-top: 100px;
+  background: #ffffff;
+  /* เทาอ่อนเรียบ */
 }
 
 .card {
   width: 100%;
   max-width: 390px;
-  padding: 24px;
+  padding: 0 24px;
+  /* เอา padding ใหญ่ ๆ ออก */
   text-align: center;
 
-  background: #ffffff;
-  border-radius: 24px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+  background: transparent;
+  /* ไม่มีพื้นขาว */
+  border-radius: 0;
+  /* ไม่ต้องโค้ง */
+  box-shadow: none;
+  /* ไม่มีเงา */
 }
 
 .logo {
@@ -144,10 +151,20 @@ const login = () => {
   color: #001F5B;
   cursor: pointer;
   font-weight: 500;
+  text-decoration: none;
+  /* 🔥 เอาเส้นใต้ออก */
 }
 
 .link:hover {
-  text-decoration: underline;
+  text-decoration: none;
+  /* 🔥 ไม่ให้มีตอน hover */
+  opacity: 0.7;
+  /* เปลี่ยนเป็นจางแทน */
+}
+
+a {
+  text-decoration: none;
+  color: #001F5B;
 }
 
 .divider {
