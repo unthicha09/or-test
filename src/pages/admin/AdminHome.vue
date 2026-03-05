@@ -17,7 +17,8 @@
                         </div>
                         <div class="user-meta">
                             <span class="drawer-license">{{ userLicense }}</span>
-                            <span class="drawer-day">{{ selectedDay }}</span>
+                            <span class="drawer-day">Admin</span>
+
                         </div>
                     </div>
                 </div>
