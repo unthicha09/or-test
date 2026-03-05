@@ -113,13 +113,13 @@
             </div>
 
             <div class="form-row-single">
-                <select class="input-field">
+                <select class="input-field" v-model="form.procedure">
                     <option value="">Select Proposed Procedure</option>
-                    <option value="lc">LC (120 min)</option>
-                    <option value="mrm">MRM (90 min)</option>
-                    <option value="thyroid">Thyroidectomy (90 min)</option>
-                    <option value="hernia">Herniorrhaphy (40 min)</option>
-                    <option value="lar">LAR (180 min)</option>
+                    <option value="LC">LC (120 min)</option>
+                    <option value="MRM">MRM (90 min)</option>
+                    <option value="Thyroidectomy">Thyroidectomy (90 min)</option>
+                    <option value="Herniorrhaphy">Herniorrhaphy (40 min)</option>
+                    <option value="LAR">LAR (180 min)</option>
                 </select>
             </div>
 
@@ -134,7 +134,6 @@
 
     </div>
 </template>
-
 
 
 <script setup>
@@ -173,13 +172,36 @@ const handleSubmit = () => {
         return
     }
 
-    console.log(form)
+    const newCase = {
+        id: Date.now(),
+        date: form.date,
+        patient: form.fullName,
+        procedure: form.procedure,
+        doctor: form.doctor,
+        name: form.room
+    }
+
+    const existingCases = JSON.parse(localStorage.getItem('operationRooms')) || []
+
+    existingCases.push(newCase)
+
+    localStorage.setItem('operationRooms', JSON.stringify(existingCases))
 
     alert("Queue added successfully")
 
+    router.push('/admin-home')
 }
 
 </script>
+
+
+
+
+
+
+
+
+
 
 
 <style scoped>
