@@ -7,18 +7,9 @@
 - 🎨 Frontend (My Work): https://github.com/unthicha09  
 - 🎨 Frontend (Teammate): https://github.com/Butsayamartpp  
 - ⚙️ Backend: https://github.com/PhenphitchaPhs
-## Full Pro ject
--https://github.com/PhenphitchaPhs/Project-OR-Room
-  
-## ✨ Features
-- 🔐 หน้า Login / Logout
-- 📊 แสดงข้อมูลห้องผ่าตัด
-- 📅 ตารางการใช้งานห้อง (Schedule)
-- 🧑‍⚕️ จัดการข้อมูลสำหรับ Admin
-- 🎨 UI/UX ออกแบบให้ใช้งานง่าย
+## ✨Full Project Update
+https://github.com/PhenphitchaPhs/Project-OR-Room
 
-## Full Pro ject
--https://github.com/PhenphitchaPhs/Project-OR-Room
 
 ## 🧑‍💻 Tech Stack
 - Frontend: Vue.js
